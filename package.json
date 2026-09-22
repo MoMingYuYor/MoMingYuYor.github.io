@@ -11,6 +11,9 @@
     "typecheck": "astro check",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
+    "fonts:collect": "tsx scripts/collect-font-chars.ts",
+    "fonts:subset": "node scripts/run-fonts-subset.mjs",
+    "fonts:build": "npm run fonts:collect && npm run fonts:subset",
     "verify": "tsx scripts/verify.ts"
   },
   "dependencies": {
