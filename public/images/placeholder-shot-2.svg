@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <rect width="1600" height="1000" fill="#242029"/>
+  <rect x="80" y="70" width="1440" height="860" rx="20" fill="#2e2a35"/>
+  <rect x="80" y="70" width="1440" height="72" rx="20" fill="#3a3543"/>
+  <rect x="80" y="122" width="1440" height="20" fill="#3a3543"/>
+  <circle cx="140" cy="106" r="12" fill="#e06c5f"/>
+  <circle cx="176" cy="106" r="12" fill="#e5b455"/>
+  <circle cx="212" cy="106" r="12" fill="#6fbf73"/>
+  <rect x="130" y="190" width="380" height="690" fill="#332f3d"/>
+  <rect x="160" y="230" width="240" height="20" rx="10" fill="#4b4557"/>
+  <rect x="160" y="280" width="300" height="14" rx="7" fill="#423d4f"/>
+  <rect x="160" y="316" width="270" height="14" rx="7" fill="#423d4f"/>
+  <rect x="560" y="230" width="900" height="44" rx="10" fill="#4b4557"/>
+  <rect x="560" y="310" width="430" height="300" rx="12" fill="#3d3849"/>
+  <rect x="1030" y="310" width="430" height="300" rx="12" fill="#3d3849"/>
+  <rect x="560" y="650" width="900" height="14" rx="7" fill="#423d4f"/>
+  <rect x="560" y="690" width="760" height="14" rx="7" fill="#423d4f"/>
+  <text x="800" y="906" font-family="system-ui, sans-serif" font-size="40" fill="#8f89a0" text-anchor="middle">演示截图占位 · 项目截图待替换 (2/3)</text>
+</svg>

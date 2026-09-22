@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.generated/
+test-results/
+playwright-report/
+
+# 字体源文件（48MB OTF）不进仓库：重建方式见 assets/fonts-source/sources.md，
+# 子集产物 src/assets/fonts/*.woff2 已入库
+assets/fonts-source/
+
+# Python 隔离环境（字体子集化工具）
+tools/fonts/.venv/

@@ -1,0 +1,7 @@
+# 字体子集化隔离环境依赖（tools/fonts/.venv）。
+# 创建方式（Windows Git Bash）：
+#   cd tools/fonts && python -m venv .venv
+#   ./.venv/Scripts/python.exe -m pip install -r requirements.txt
+# 版本为冻结的精确版本（pip freeze），升级前先在本地验证子集结果一致。
+fonttools==4.65.0
+brotli==1.2.0

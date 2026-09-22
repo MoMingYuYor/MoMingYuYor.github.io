@@ -1,0 +1,189 @@
+/* 全局排版与基础交互；组件局部样式保留在各 SFC 内 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-primary);
+  background: var(--page-bg);
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+/* 键盘焦点始终有可见轮廓 */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--page-bg);
+}
+
+/* 内容容器：正文内容最大宽度 1280px，两侧边距随视口收敛 */
+.container {
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: var(--container-pad);
+}
+
+/* 锚点章节避开固定 Header */
+section[id] {
+  scroll-margin-top: calc(var(--header-height) + 24px);
+}
+
+/* 供键盘聚焦的标题（移动菜单跳转后焦点落点） */
+[tabindex='-1']:focus {
+  outline: none;
+}
+[tabindex='-1']:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 4px;
+}
+
+/* 章节头部公共样式：短线、编号、标题一行，导语在右（窄屏折行） */
+.section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 48px;
+  flex-wrap: wrap;
+  margin-bottom: clamp(2.5rem, 6vw, 4rem);
+}
+
+.section-head-row {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.section-kicker-dash {
+  align-self: center;
+  width: 28px;
+  height: 1px;
+  background: var(--accent);
+}
+
+.section-number {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  letter-spacing: 0.25em;
+  color: var(--accent);
+}
+
+.section-kicker-sep {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.section-heading {
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  letter-spacing: 0.02em;
+}
+
+.section-intro {
+  max-width: 32em;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  text-align: right;
+}
+
+/* 章节节奏：桌面 80–112px、窄屏 48–64px，随视口连续收敛，
+   避免手机上日期、引文与空白连续占屏 */
+.section-block {
+  padding-block: clamp(3rem, 8vw, 7rem);
+}
+
+@media (max-width: 639px) {
+  .section-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .section-intro {
+    text-align: left;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 跳到主要内容入口：默认隐藏，键盘聚焦时出现 */
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 100;
+  padding: 10px 16px;
+  background: var(--surface-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/* 减少动态效果：取消入场位移、平滑滚动与交叉淡入，直接呈现终态 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

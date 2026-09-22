@@ -1,0 +1,108 @@
+/*
+ * 设计变量（暮色 / 晴光双主题）。
+ * 默认变量为浅色兜底，data-theme="dark" 覆盖暗色；
+ * 无 JavaScript 时由系统媒体查询提供合理配色。
+ */
+:root {
+  color-scheme: light;
+
+  --page-bg: #f7f5f0;
+  --surface-bg: #fffdf8;
+  --text-primary: #242a2c;
+  --text-secondary: #646967;
+  --accent: #875b2d;
+  --border: #d8d5cf;
+  --glass-bg: rgba(255, 253, 247, 0.82);
+  --focus-ring: #68451f;
+
+  /* 首屏壁纸未加载/失败时的主题色回退 */
+  --hero-fallback: linear-gradient(180deg, #e3ebf1 0%, #f2efe8 62%, #e7e2d6 100%);
+  /* 首屏文字侧的局部可读性遮罩 */
+  --hero-veil: linear-gradient(
+    92deg,
+    rgba(247, 245, 240, 0.88) 0%,
+    rgba(247, 245, 240, 0.62) 34%,
+    rgba(247, 245, 240, 0) 62%
+  );
+  /* 窄屏文字组的局部柔和底：全宽条带，文字后方约 0.72–0.86 暖白，
+     纵向两端渐隐至透明，不再从顶部到底部统一增白，风景主体保持层次 */
+  --hero-text-veil: linear-gradient(
+    180deg,
+    rgba(247, 245, 240, 0) 0%,
+    rgba(247, 245, 240, 0.86) 12%,
+    rgba(247, 245, 240, 0.86) 88%,
+    rgba(247, 245, 240, 0) 100%
+  );
+  --shadow-soft: 0 1px 2px rgba(36, 42, 44, 0.08);
+
+  --font-sans:
+    system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  --font-serif:
+    'Noto Serif SC', Georgia, 'Times New Roman', 'Songti SC', SimSun, serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', Consolas, 'Courier New', monospace;
+
+  --content-max: 1280px;
+  /* 容器两侧内边距：.container 与首屏文字条带的水平对齐共用 */
+  --container-pad: clamp(1rem, 4vw, 5rem);
+  --header-height: 64px;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --page-bg: #15191d;
+  --surface-bg: #1d242b;
+  --text-primary: #f2eee6;
+  --text-secondary: #b2b9bf;
+  --accent: #d2ad72;
+  --border: #39434d;
+  --glass-bg: rgba(18, 30, 44, 0.72);
+  --focus-ring: #e6c58e;
+
+  --hero-fallback: linear-gradient(180deg, #101c28 0%, #16222e 55%, #0f1922 100%);
+  --hero-veil: linear-gradient(
+    92deg,
+    rgba(21, 25, 29, 0.82) 0%,
+    rgba(21, 25, 29, 0.55) 34%,
+    rgba(21, 25, 29, 0) 62%
+  );
+  --hero-text-veil: linear-gradient(
+    180deg,
+    rgba(21, 25, 29, 0) 0%,
+    rgba(21, 25, 29, 0.8) 12%,
+    rgba(21, 25, 29, 0.8) 88%,
+    rgba(21, 25, 29, 0) 100%
+  );
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* 无 JavaScript 时按系统外观给备用说明提供配色 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --page-bg: #15191d;
+    --surface-bg: #1d242b;
+    --text-primary: #f2eee6;
+    --text-secondary: #b2b9bf;
+    --accent: #d2ad72;
+    --border: #39434d;
+    --glass-bg: rgba(18, 30, 44, 0.72);
+    --focus-ring: #e6c58e;
+    --hero-fallback: linear-gradient(180deg, #101c28 0%, #16222e 55%, #0f1922 100%);
+    --hero-veil: linear-gradient(
+      92deg,
+      rgba(21, 25, 29, 0.82) 0%,
+      rgba(21, 25, 29, 0.55) 34%,
+      rgba(21, 25, 29, 0) 62%
+    );
+    --hero-text-veil: linear-gradient(
+      180deg,
+      rgba(21, 25, 29, 0) 0%,
+      rgba(21, 25, 29, 0.8) 12%,
+      rgba(21, 25, 29, 0.8) 88%,
+      rgba(21, 25, 29, 0) 100%
+    );
+    --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "personal-home",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "沉浸式风景首屏与分章节画廊的个人主页（演示占位阶段）",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run check:content && npm run fonts:build && vite build",
+    "build:ci": "npm run check:content && vite build",
+    "preview": "vite preview",
+    "verify": "tsx scripts/verify.ts",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
+    "check:content": "tsx scripts/prepare-site.ts",
+    "fonts:collect": "tsx scripts/collect-font-chars.ts",
+    "fonts:subset": "node scripts/run-fonts-subset.mjs",
+    "fonts:build": "npm run fonts:collect && npm run fonts:subset"
+  },
+  "dependencies": {
+    "@fontsource/noto-serif-sc": "^5.3.0",
+    "vue": "^3.5.43"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.2",
+    "@vitejs/plugin-vue": "^6.0.9",
+    "@vue/test-utils": "^2.5.1",
+    "happy-dom": "^20.14.5",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1",
+    "vue-tsc": "^3.3.11"
+  }
+}

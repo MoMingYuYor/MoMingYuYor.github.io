@@ -1,0 +1,27 @@
+/*
+ * 本地子集衬线字体：Noto Serif SC 600/700（OFL 许可）。
+ * woff2 子集由 scripts/prepare-fonts.py 按 .generated/font-chars.txt 字符清单
+ * 从 assets/fonts-source/ 的官方 OTF 静态实例生成，并复制到 src/assets/fonts/；
+ * 重建方式与来源记录见 assets/fonts-source/sources.md。
+ *
+ * 说明：
+ * - 单子集覆盖站点全部文本，无需按 unicode-range 拆分；
+ * - font-display: swap：字体加载期间以系统衬线字体保底，缺字不会出现方框；
+ * - 字体族名与 tokens.css 的 --font-serif 首选项一致，本文件不改动 tokens.css。
+ */
+
+@font-face {
+  font-family: 'Noto Serif SC';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../assets/fonts/noto-serif-sc-600.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Serif SC';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../assets/fonts/noto-serif-sc-700.woff2') format('woff2');
+}

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#39404d"/>
+      <stop offset="1" stop-color="#232833"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#bg)"/>
+  <rect x="260" y="640" width="500" height="16" rx="8" fill="#59637a"/>
+  <rect x="260" y="690" width="360" height="16" rx="8" fill="#4c556a"/>
+  <rect x="900" y="560" width="440" height="300" rx="16" fill="#4c556a" opacity="0.6"/>
+  <rect x="960" y="620" width="320" height="16" rx="8" fill="#6b7690"/>
+  <rect x="960" y="668" width="240" height="16" rx="8" fill="#5d6880"/>
+  <circle cx="400" cy="330" r="130" fill="#59637a" opacity="0.4"/>
+  <text x="800" y="505" font-family="system-ui, sans-serif" font-size="56" fill="#dde3ee" text-anchor="middle">演示占位图 · 兴趣图片待替换</text>
+  <text x="800" y="575" font-family="system-ui, sans-serif" font-size="32" fill="#a7b2c8" text-anchor="middle">interest demo placeholder 3/3</text>
+</svg>
