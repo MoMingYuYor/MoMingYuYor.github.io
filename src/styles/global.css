@@ -1,0 +1,333 @@
+/*
+ * global.css —— 全局样式入口（共享契约，S1-T3 定稿；后续阶段只增量使用）
+ *
+ * 依据：规格 11.2（页面构图与响应式节奏）、11.3（配色与排印）、11.4（交互与细节）、13（性能与可访问性目标）。
+ *
+ * 导入链：本文件是样式的唯一入口，页面与布局只导入 global.css，
+ *         由它带上设计变量（tokens.css）与字体声明（fonts.css），避免重复导入与顺序错乱。
+ *
+ * 内容：排版基线、布局容器、unframed 分区、章节头公共样式、键盘焦点轮廓、skip-link、
+ *       减少动画的兜底、触摸目标与少量通用工具类。
+ *
+ * 结构约定：作品、硬件、文章与关于各节使用 .section（细分隔线 + 留白）组织，
+ *           不把整节包进卡片，也不嵌套卡片；卡片只用于重复条目、模态或确有边界的工具，
+ *           圆角一律取自 --radius-sm / --radius-md（不超过 8px）。
+ *
+ * 禁止项：不使用视差滚动、自动打字、鼠标拖尾、粒子、装饰光斑与全屏 3D（规格 11.4）。
+ */
+
+@import './tokens.css';
+@import './fonts.css';
+
+/* ===== 1. 重置与基线 ===== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-surface-page);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--letter-spacing-normal);
+  /* 长型号、邮箱、URL 在需要时换行，不撑出整页横向滚动 */
+  overflow-wrap: break-word;
+}
+
+/* ===== 2. 排版基线 ===== */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-heading);
+  letter-spacing: var(--letter-spacing-normal);
+  /* 长标题自然换行，不为了单行呈现隐藏文字 */
+  text-wrap: balance;
+}
+
+/* 姓名与主要章节标题保留衬线气质 */
+h1,
+h2,
+h3 {
+  font-family: var(--font-serif);
+}
+
+/* 更深层级的小标题用无衬线，与正文区分层级 */
+h4,
+h5,
+h6 {
+  font-family: var(--font-sans);
+}
+
+/* 页面级标题默认档位；首页姓名另用 .display-name 取 40/56/80px */
+h1,
+h2 {
+  font-size: var(--font-size-section-title);
+}
+
+h3 {
+  font-size: var(--font-size-body-lg);
+}
+
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-body);
+}
+
+/* 姓名档位：手机 40px / 平板 56px / 桌面 80px，档位切换在 tokens.css 的媒体查询里 */
+.display-name {
+  font-family: var(--font-serif);
+  font-size: var(--font-size-name);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+p,
+figure,
+blockquote,
+dl,
+dd,
+ol,
+ul,
+pre {
+  margin: 0;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+/* 悬停加粗下划线：差异不只靠颜色表达 */
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* 引用用衬线 600 字重（对应 600 子集），与正文拉开气质差异 */
+blockquote {
+  padding-inline-start: var(--space-lg);
+  border-inline-start: var(--divider);
+  font-family: var(--font-serif);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+/* 代码与参数用等宽；代码块在自身容器内横向滚动 */
+code,
+kbd,
+samp {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+pre {
+  max-width: 100%;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-ui);
+}
+
+pre code {
+  font-size: inherit;
+}
+
+/* 表格在自身容器内横向滚动（规格 11.4：局部滚动策略） */
+table {
+  border-collapse: collapse;
+}
+
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+img,
+picture,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+img,
+video {
+  height: auto;
+}
+
+hr {
+  border: 0;
+  border-top: var(--divider);
+}
+
+/* 控件继承页面字体，不引入第二套字体栈 */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+/* ===== 3. 键盘焦点：始终可见，且不只靠颜色表达 ===== */
+
+:focus-visible {
+  /* 实线轮廓 + 偏移留白：即使元素底色与轮廓同色，留白仍提供形状上的区分 */
+  outline: var(--focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ===== 4. 布局容器与 unframed 分区 ===== */
+
+/* max-width 含左右留白（border-box），故加上两侧留白，使内容列恰好等于规格宽度 */
+.container {
+  width: 100%;
+  max-width: calc(var(--layout-container-narrow) + var(--layout-gutter) * 2);
+  margin-inline: auto;
+  padding-inline: var(--layout-gutter);
+}
+
+/* 首页正文 1200px */
+.container--home {
+  max-width: calc(var(--layout-container) + var(--layout-gutter) * 2);
+}
+
+/* 文章正文 720px（第三阶段消费） */
+.container--article {
+  max-width: calc(var(--layout-article) + var(--layout-gutter) * 2);
+}
+
+/* unframed 分区：细分隔线与留白组织内容，不做卡片包裹 */
+.section {
+  padding-block: var(--space-section);
+  border-top: var(--divider);
+}
+
+/* 紧跟主视觉或其他开场的首个分区不画分隔线 */
+.section--first {
+  border-top: 0;
+}
+
+/* ===== 5. 章节头公共样式（供 SectionHeader 组件消费） ===== */
+
+.section-header {
+  display: grid;
+  gap: var(--space-xs);
+  margin-block-end: var(--space-xl);
+}
+
+/* 编号是金色唯一的常规用途之一：少量、小面积 */
+.section-header__number {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-ui);
+  color: var(--color-accent-gold);
+}
+
+.section-header__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--font-size-section-title);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-heading);
+  letter-spacing: var(--letter-spacing-normal);
+  text-wrap: balance;
+}
+
+.section-header__lead {
+  max-width: 36em; /* 中文约 36 字/行 */
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+/* ===== 6. skip-link 与视觉隐藏 ===== */
+
+/* 默认移出视口，获得焦点时滑入；保持可聚焦与可读屏 */
+.skip-link {
+  position: fixed;
+  top: var(--space-md);
+  left: var(--space-md);
+  z-index: var(--z-index-skip-link);
+  display: inline-block;
+  padding: var(--space-sm) var(--space-lg);
+  background-color: var(--color-surface-content);
+  color: var(--color-text-primary);
+  border: var(--divider);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-overlay);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  transform: translateY(calc(-100% - var(--space-2xl)));
+  transition: transform var(--duration-base) var(--easing-standard);
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+/* ===== 7. 通用工具类 ===== */
+
+/* 导航、页脚、面包屑等语义列表：保留列表语义，去掉默认标记与缩进 */
+.list-plain {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 主要触摸目标以 44px 为设计目标 */
+.touch-target {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+}
+
+/* ===== 8. 减少动画：立即呈现终态 ===== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+}

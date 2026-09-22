@@ -1,0 +1,171 @@
+/*
+ * tokens.css —— 设计变量（共享契约，S1-T3 定稿；后续阶段只增量消费，不改名、不复制第二份）
+ *
+ * 依据：规格 11.2（页面构图与响应式节奏）、11.3（配色与排印）、11.4（交互与细节）。
+ *
+ * 主题：切换点统一为根元素 data-theme 属性。:root 为浅色；[data-theme='dark'] 为深色。
+ *       @media (prefers-color-scheme: dark) 只作用于 :root:not([data-theme])，作为无脚本兜底，
+ *       不让 prefers-color-scheme 单独承载最终状态。三种状态都落在根元素上，
+ *       因此本文件里的复合变量（如 --divider）在根元素求值即可正确跟随主题。
+ *
+ * 颜色：以下色值为规格 11.3 的实现初值。尚未做真实像素对比度实测，
+ *       因此不得据此声称达到 WCAG 2.2 AA。金色只承担少量编号、细线与图片呼应，不作大面积表面。
+ *
+ * 断点：主要断点为 768px 与 1024px。CSS 变量不能用于 @media 条件，故断点写在媒体查询里，
+ *       本文件是这三个断点的唯一定义处，组件不另立数值。
+ *
+ * 禁止项（规格 11.3 / 11.4）：不用 vw 连续缩放字号；字距为 0；卡片圆角不超过 8px；
+ *       不使用视差滚动、自动打字、鼠标拖尾、粒子、装饰光斑与全屏 3D。
+ */
+
+:root {
+  /* ===== 颜色：浅色主题（规格 11.3 初值表） ===== */
+  --color-surface-page: #F7F8F8; /* 页面底色 */
+  --color-surface-content: #FFFFFF; /* 内容表面 */
+  --color-surface-muted: #EEF1F1; /* 次要表面：代码块、表头等 */
+  --color-surface-glass: rgba(255, 255, 255, 0.86); /* 固定导航与浮层；无模糊支持时仍足够不透明 */
+  --color-text-primary: #242A2C; /* 主要文字 */
+  --color-text-secondary: #555E62; /* 次要文字 */
+  --color-accent: #166D68; /* 链接与操作 */
+  --color-accent-contrast: #FFFFFF; /* 操作色之上的文字 */
+  --color-accent-gold: #806138; /* 少量章节装饰：编号、细线、图片呼应 */
+  --color-border: #D8DEDF; /* 分隔线 */
+  --color-focus-ring: var(--color-accent);
+  --color-overlay-scrim: rgba(247, 248, 248, 0.62); /* 图片上文字的局部遮罩，不整图压暗 */
+  color-scheme: light;
+
+  /* ===== 字体栈（规格 11.3：姓名与主要章节标题衬线，正文与控件系统无衬线，代码与参数等宽） ===== */
+  --font-serif: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'SimSun', serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', 'Cascadia Mono', 'Consolas', 'Liberation Mono', 'Menlo',
+    monospace;
+
+  /* ===== 字号：固定响应式档位（禁用 vw 连续缩放） ===== */
+  --font-size-name-sm: 40px; /* 手机：姓名 */
+  --font-size-name-md: 56px; /* 平板：姓名 */
+  --font-size-name-lg: 80px; /* 桌面：姓名 */
+  --font-size-name: var(--font-size-name-sm); /* 当前姓名档位，由文件末尾媒体查询切换 */
+  --font-size-section-title-sm: 28px; /* 手机：章节标题 */
+  --font-size-section-title-lg: 36px; /* 平板与桌面：章节标题 */
+  --font-size-section-title: var(--font-size-section-title-sm); /* 当前章节标题档位 */
+  --font-size-body: 16px; /* 正文 */
+  --font-size-body-lg: 18px; /* 文章正文与导语 */
+  --font-size-label: 14px; /* 交互控件、标签 */
+  --font-size-caption: 13px; /* 日期、来源、元信息 */
+
+  /* ===== 字重、行高、字距 ===== */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-tight: 1.15;
+  --line-height-heading: 1.3;
+  --line-height-ui: 1.5;
+  --line-height-body: 1.75; /* 中文正文行高 */
+  --letter-spacing-normal: 0; /* 规格 11.3：字距为 0 */
+
+  /* ===== 间距档位 ===== */
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --space-4xl: 96px;
+  --space-section: var(--space-3xl); /* unframed 分区的纵向留白，由媒体查询放大 */
+
+  /* ===== 布局：容器与留白（规格 11.2） ===== */
+  --layout-container: 1200px; /* 首页正文最大宽度 */
+  --layout-container-narrow: 1120px; /* 内页通用容器最大宽度 */
+  --layout-article: 720px; /* 文章正文最大宽度 */
+  --layout-gutter-min: 16px; /* 手机最小水平留白，不得低于此值 */
+  --layout-gutter: var(--layout-gutter-min); /* 当前水平留白，由媒体查询放大 */
+
+  /* ===== 圆角与描边（规格 11.3：卡片圆角不超过 8px） ===== */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px; /* 卡片与确有边界的容器上限，不得更大 */
+  --radius-pill: 999px;
+  --border-width: 1px;
+  --divider: var(--border-width) solid var(--color-border); /* 细分隔线：unframed 分区与章节头共用 */
+  --shadow-overlay: 0 4px 16px rgba(0, 0, 0, 0.16); /* 浮层与 skip-link 的投影，仅用于离开文档流的元素 */
+
+  /* ===== 状态反馈与动效（规格 11.4：120–200ms，主题图片淡入不超过 300ms） ===== */
+  --duration-fast: 120ms;
+  --duration-base: 160ms;
+  --duration-slow: 200ms;
+  --duration-image-fade: 240ms;
+  --easing-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ===== 键盘焦点（规格 11.4：焦点始终可见，颜色不是唯一标记） ===== */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  /* ===== 触摸目标（规格 11.4：主要触摸目标以 44px 为设计目标） ===== */
+  --touch-target-min: 44px;
+
+  /* ===== 玻璃（规格 11.1：仅用于固定导航与必要浮层） ===== */
+  --glass-blur: 12px;
+
+  /* ===== 层叠顺序 ===== */
+  --z-index-header: 100;
+  --z-index-skip-link: 200;
+}
+
+/* 无脚本兜底：根元素没有 data-theme 时跟随系统深色，不覆盖显式主题 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --color-surface-page: #181A1C;
+    --color-surface-content: #222629;
+    --color-surface-muted: #2A2F32;
+    --color-surface-glass: rgba(24, 26, 28, 0.86);
+    --color-text-primary: #F2F1ED;
+    --color-text-secondary: #B5BEC2;
+    --color-accent: #87D0C6;
+    --color-accent-contrast: #14201F;
+    --color-accent-gold: #D2AD72;
+    --color-border: #424A4E;
+    --color-focus-ring: var(--color-accent);
+    --color-overlay-scrim: rgba(12, 14, 16, 0.58);
+    color-scheme: dark;
+  }
+}
+
+/* 显式深色主题：写在兜底之后，同特异性下按来源顺序生效 */
+[data-theme='dark'] {
+  --color-surface-page: #181A1C;
+  --color-surface-content: #222629;
+  --color-surface-muted: #2A2F32;
+  --color-surface-glass: rgba(24, 26, 28, 0.86);
+  --color-text-primary: #F2F1ED;
+  --color-text-secondary: #B5BEC2;
+  --color-accent: #87D0C6;
+  --color-accent-contrast: #14201F;
+  --color-accent-gold: #D2AD72;
+  --color-border: #424A4E;
+  --color-focus-ring: var(--color-accent);
+  --color-overlay-scrim: rgba(12, 14, 16, 0.58);
+  color-scheme: dark;
+}
+
+/* ===== 断点 768px：平板档位 ===== */
+@media (min-width: 768px) {
+  :root {
+    --font-size-name: var(--font-size-name-md);
+    --font-size-section-title: var(--font-size-section-title-lg);
+    --layout-gutter: 24px;
+    --space-section: 80px;
+  }
+}
+
+/* ===== 断点 1024px：桌面档位 ===== */
+@media (min-width: 1024px) {
+  :root {
+    --font-size-name: var(--font-size-name-lg);
+    --layout-gutter: 32px;
+    --space-section: var(--space-4xl);
+  }
+}

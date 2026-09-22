@@ -1,0 +1,25 @@
+/*
+ * fonts.css —— 展示衬线字体（Noto Serif SC 子集，S1-T4 负责子集重建，本文件只声明用法）
+ *
+ * 用途：姓名与主要章节标题（规格 11.3）。中文正文与交互控件走系统无衬线，
+ *       代码与参数走等宽，均不在此声明。
+ * 路径：相对 src/styles/ 指向 src/assets/fonts/，由构建工具处理并加内容哈希。
+ * 字重：600 覆盖章节标题与引用，700 覆盖姓名与主要标题；两份子集分别按真实用字裁剪，
+ *       不共用同一份字符清单。
+ */
+
+@font-face {
+  font-family: 'Noto Serif SC';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../assets/fonts/noto-serif-sc-600.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Serif SC';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../assets/fonts/noto-serif-sc-700.woff2') format('woff2');
+}
