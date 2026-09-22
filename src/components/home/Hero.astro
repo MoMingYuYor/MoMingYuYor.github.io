@@ -214,7 +214,7 @@ const mailContact = contacts.find((contact) => contact.icon === 'mail')
     background: linear-gradient(
       to top,
       var(--color-overlay-scrim) 0%,
-      color-mix(in srgb, var(--color-overlay-scrim) 55%, transparent) 45%,
+      color-mix(in srgb, var(--color-overlay-scrim) 72%, transparent) 55%,
       transparent 100%
     );
   }
@@ -223,7 +223,9 @@ const mailContact = contacts.find((contact) => contact.icon === 'mail')
     position: relative;
     z-index: 2;
     padding-block: var(--space-2xl) var(--space-3xl);
-    color: var(--color-accent-contrast);
+    /* 照片之上的文字用不随主题变化的浅色；--color-accent-contrast 是"操作色之上的文字"，
+       深色主题下它是深色，直接拿来当主视觉文字色会让姓名几乎看不见 */
+    color: var(--color-text-on-media);
   }
 
   /* 日期与问候：次要元素，一行紧凑呈现，不与姓名、入口并列成大面板（规格第 3 节） */
@@ -289,6 +291,8 @@ const mailContact = contacts.find((contact) => contact.icon === 'mail')
     padding-inline: var(--space-lg);
     border: var(--border-width) solid currentColor;
     border-radius: var(--radius-pill);
+    /* 次级入口压在照片上：垫一层半透明深色底，白字白边才在明亮区域也读得清 */
+    background-color: var(--color-action-on-media-backdrop);
     font-size: var(--font-size-body);
     font-weight: var(--font-weight-medium);
     text-decoration: none;

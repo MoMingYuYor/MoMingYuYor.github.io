@@ -31,7 +31,15 @@
   --color-accent-gold: #806138; /* 少量章节装饰：编号、细线、图片呼应 */
   --color-border: #D8DEDF; /* 分隔线 */
   --color-focus-ring: var(--color-accent);
-  --color-overlay-scrim: rgba(247, 248, 248, 0.62); /* 图片上文字的局部遮罩，不整图压暗 */
+  /*
+   * 图片上文字的局部遮罩。两个主题都取深色：遮罩下压的是照片，而照片的明暗与主题无关，
+   * 文字必须始终是浅色才稳定可读。浅色主题曾用浅色遮罩 + 白字，实测对比度不足。
+   */
+  --color-overlay-scrim: rgba(12, 14, 16, 0.62);
+  /* 照片之上的文字。不随主题变化，理由同上；不要用 --color-accent-contrast 代替 */
+  --color-text-on-media: #F2F1ED;
+  /* 压在照片上的次级操作（描边按钮）的底色：白字白边落在明亮水面区域会读不清 */
+  --color-action-on-media-backdrop: rgba(12, 14, 16, 0.62);
   color-scheme: light;
 
   /* ===== 字体栈（规格 11.3：姓名与主要章节标题衬线，正文与控件系统无衬线，代码与参数等宽） ===== */
