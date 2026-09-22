@@ -14,3 +14,6 @@ tools/fonts/.venv/
 # 本地过程档案与内部设计文档，不随站点仓库公开
 .superpowers/
 docs/
+
+# Astro 生成的类型与内容缓存，不入库
+.astro/
