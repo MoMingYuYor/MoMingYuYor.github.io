@@ -142,16 +142,20 @@ describe('HERO_NARROW_QUERY', () => {
 })
 
 describe('buildThemeManifest', () => {
-  it('只保留选图与预载必需的字段，不携带站点文案', () => {
+  it('地址在构建期解析完毕，浏览器端不需要路径逻辑', () => {
     const manifest = buildThemeManifest(heroPair, '/personal/')
-    expect(manifest.base).toBe('/personal/')
     expect(manifest.hero.light).toEqual({
-      src: 'images/hero-light.webp',
+      href: '/personal/images/hero-light.webp',
       width: 1600,
       height: 900,
     })
-    expect(manifest.hero.dark.src).toBe('images/hero-dark.webp')
+    expect(manifest.hero.dark.href).toBe('/personal/images/hero-dark.webp')
+  })
+
+  it('只保留选图与预载必需的字段，不携带站点文案', () => {
+    const manifest = buildThemeManifest(heroPair, '/')
     expect(JSON.stringify(manifest)).not.toContain('应用截图')
     expect('alt' in manifest.hero.light).toBe(false)
+    expect('base' in manifest).toBe(false)
   })
 })

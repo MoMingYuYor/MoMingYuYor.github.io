@@ -1,0 +1,342 @@
+---
+/**
+ * 站点导航（计划 S1-T6）。
+ *
+ * 依据：规格第 9 节（手机导航使用无脚本也可展开的原生结构，脚本只增强外部点击关闭、Escape
+ * 与焦点管理；桌面导航始终直接可见）、第 10 节（导航收起行为覆盖触发器后代元素、点外部、
+ * Escape 和断点变化）、第 11.4 节（Lucide 图标规格、44px 触摸目标、键盘焦点始终可见、
+ * 颜色不是选中状态的唯一标记）、第 2 节（主导航固定五项、顺序固定、路径经统一构造函数生成）。
+ *
+ * 结构：`<details>` 是浏览器原生 disclosure。无脚本时点击、Enter、Space 都能展开，展开前
+ * 内部链接既不在无障碍树里也不在 Tab 顺序中，全部由浏览器原生行为保证。桌面端（≥1024px）
+ * 用 CSS 让面板常驻可见并隐藏触发器，不用脚本判断视口宽度。
+ *
+ * 主题控件经默认插槽放在面板内：手机端随菜单展开，桌面端与导航同排常驻。
+ * 插槽内容由 SiteHeader 决定，本组件只提供位置。
+ *
+ * 未覆盖：真机触控、读屏实际播报、跨浏览器（本阶段只跑系统 Chrome，第四阶段 S4-T6 扩展）。
+ */
+import { sitePath } from '../lib/paths'
+import { navigation } from '../lib/site'
+
+interface Props {
+  /** 当前页面路径（`Astro.url.pathname`）；与链接地址完全相等时标记 `aria-current="page"` */
+  currentPath?: string
+}
+
+const { currentPath } = Astro.props
+const base = import.meta.env.BASE_URL
+
+/** 五项导航：首页的 segments 为空数组，`sitePath` 不传段时返回 base 本身 */
+const items = navigation.map((item) => ({
+  label: item.label,
+  href: sitePath(base, ...item.segments),
+}))
+---
+
+<details class="nav-menu" data-nav-menu>
+  <summary class="nav-menu__trigger" data-nav-menu-trigger aria-label="打开导航菜单">
+    <!--
+      触发器图标：Lucide 规格（24px 画板、线宽 2、圆头圆角、fill 为 none）。
+      展开状态用 CSS 切换图标，无脚本时图标也跟着变。
+    -->
+    <svg
+      class="nav-menu__icon nav-menu__icon--open"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 12h16"></path>
+      <path d="M4 6h16"></path>
+      <path d="M4 18h16"></path>
+    </svg>
+    <svg
+      class="nav-menu__icon nav-menu__icon--close"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M18 6 6 18"></path>
+      <path d="m6 6 12 12"></path>
+    </svg>
+  </summary>
+
+  <div class="nav-menu__panel" data-nav-menu-panel>
+    <nav class="nav-menu__nav" aria-label="站点导航">
+      <ul class="nav-menu__list list-plain">
+        {
+          items.map((item) => (
+            <li class="nav-menu__item">
+              <a
+                class="nav-menu__link"
+                href={item.href}
+                aria-current={currentPath === item.href ? 'page' : undefined}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="nav-menu__extra">
+      <slot />
+    </div>
+  </div>
+</details>
+
+<script>
+  /**
+   * 手机导航增强（规格第 9、10 节）。展开/收起本身由原生 `<details>` 承担，
+   * 本脚本只补四件原生结构不做的事：外部点击关闭、Escape 关闭并还焦、
+   * 打开后焦点进入首个链接、断点变化时收起。
+   */
+  const DESKTOP_QUERY = '(min-width: 1024px)'
+
+  for (const menu of document.querySelectorAll<HTMLDetailsElement>('[data-nav-menu]')) {
+    const trigger = menu.querySelector<HTMLElement>('[data-nav-menu-trigger]')
+    const panel = menu.querySelector<HTMLElement>('[data-nav-menu-panel]')
+    if (!trigger || !panel) continue
+
+    const firstLink = () => panel.querySelector<HTMLAnchorElement>('a[href]')
+
+    /** 触发器名称随展开状态更新；展开状态本身由原生 details 语义表达，不重复声明 */
+    const syncTriggerLabel = () => {
+      trigger.setAttribute('aria-label', menu.open ? '关闭导航菜单' : '打开导航菜单')
+    }
+
+    // 打开后焦点进入首个导航链接，键盘用户不必再 Tab 一次
+    menu.addEventListener('toggle', () => {
+      syncTriggerLabel()
+      if (menu.open) firstLink()?.focus()
+    })
+
+    // Escape 只在菜单打开期间接管（关闭状态下事件根本不会冒泡到 menu），
+    // 不把普通导航改造成锁焦点的模态弹窗
+    menu.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || !menu.open) return
+      menu.open = false
+      trigger.focus()
+    })
+
+    /*
+     * 外部点击关闭。内部判定用包含关系：`menu` 同时包含触发器与面板，因此触发器本身
+     * 和它的所有后代（图标、路径）都算内部。只比较 `target === trigger` 会把点击图标
+     * 判成外部，先关一次再被原生展开，菜单关不掉。
+     */
+    document.addEventListener('pointerdown', (event) => {
+      if (!menu.open) return
+      const target = event.target
+      if (target instanceof Node && menu.contains(target)) return
+      menu.open = false
+    })
+
+    // 断点变化收起菜单，并且不让焦点留在已经隐藏的区域
+    const desktop = window.matchMedia(DESKTOP_QUERY)
+    desktop.addEventListener('change', () => {
+      if (!menu.open) return
+      const active = document.activeElement
+      const focusInPanel = active instanceof Node && panel.contains(active)
+      const focusOnTrigger = active === trigger
+      menu.open = false
+      if (!focusInPanel && !focusOnTrigger) return
+      // 桌面端面板常驻可见，转到首个导航链接；窄屏面板收起，转到触发器
+      const next = desktop.matches ? firstLink() : trigger
+      next?.focus()
+    })
+  }
+</script>
+
+<style>
+  /*
+   * 触发器：44px 触摸目标，去掉了原生 disclosure 三角标记（改为菜单/关闭图标）。
+   * 窄屏常驻；桌面隐藏（见下方媒体查询）。
+   */
+  .nav-menu__trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--touch-target-min);
+    min-height: var(--touch-target-min);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    /* 覆盖 UA 的 list-item 标记，图标由本组件提供 */
+    list-style: none;
+  }
+
+  .nav-menu__trigger::-webkit-details-marker {
+    display: none;
+  }
+
+  .nav-menu__trigger::marker {
+    content: '';
+  }
+
+  .nav-menu__trigger:hover {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  /* 键盘焦点始终可见；指针点击时也可见，不做“只在键盘时才画”的弱化 */
+  .nav-menu__trigger:focus-visible {
+    outline: var(--focus-ring-width) solid var(--color-focus-ring);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  .nav-menu__icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* 展开状态切换图标：纯 CSS，无脚本时同样生效 */
+  .nav-menu__icon--close {
+    display: none;
+  }
+
+  .nav-menu[open] .nav-menu__icon--open {
+    display: none;
+  }
+
+  .nav-menu[open] .nav-menu__icon--close {
+    display: block;
+  }
+
+  /* ===== 窄屏：面板是页头下方的浮层，展开状态由原生 details 控制 ===== */
+
+  @media (max-width: 1023px) {
+    .nav-menu__panel {
+      position: absolute;
+      inset-inline: 0;
+      /* 页头自身高度由内容决定，不用写死数值；加上底边框宽度对齐到页头下沿 */
+      top: calc(100% + var(--border-width));
+      z-index: var(--z-index-header);
+      /* 短屏时面板在自身内部滚动，不把整页撑高 */
+      max-block-size: calc(100dvh - var(--header-block-size, 60px) - var(--space-md));
+      overflow-y: auto;
+      padding: var(--space-sm) var(--layout-gutter) var(--space-lg);
+      /* 玻璃只用于固定导航与必要浮层（规格第 11.1 节） */
+      background: var(--color-surface-glass);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
+      border-block-end: var(--divider);
+      box-shadow: var(--shadow-overlay);
+    }
+
+    /* 不支持背景模糊时退回不透明底色，保证导航文字对比度 */
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .nav-menu__panel {
+        background: var(--color-surface-content);
+      }
+    }
+
+    .nav-menu__list {
+      display: grid;
+      gap: var(--space-2xs);
+    }
+
+    .nav-menu__link {
+      display: flex;
+      align-items: center;
+      min-height: var(--touch-target-min);
+      padding-inline: var(--space-xs);
+      border-radius: var(--radius-sm);
+      color: var(--color-text-primary);
+      font-size: var(--font-size-body);
+      text-decoration: none;
+    }
+
+    .nav-menu__link:hover {
+      text-decoration-line: underline;
+    }
+
+    /* 当前页：颜色 + 前置竖线，不把颜色当作唯一标记 */
+    .nav-menu__link[aria-current='page'] {
+      font-weight: var(--font-weight-semibold);
+      background: var(--color-surface-muted);
+      box-shadow: inset 2px 0 0 var(--color-accent);
+    }
+
+    .nav-menu__extra {
+      margin-block-start: var(--space-sm);
+      padding-block-start: var(--space-sm);
+      border-block-start: var(--divider);
+    }
+  }
+
+  /* ===== 桌面（≥1024px）：导航常驻可见，不依赖展开状态 ===== */
+
+  @media (min-width: 1024px) {
+    /*
+     * 面板常驻可见的两条覆盖，分别对应两类浏览器实现：
+     * 1) 作者来源的 `display` 覆盖 UA 样式表对 `details:not([open]) > *` 的隐藏（旧实现）；
+     * 2) Chrome 131+ 用 `::details-content` 的 `content-visibility: hidden` 隐藏内容，
+     *    这里显式改回 visible。两条都写上，任一实现下都成立。
+     */
+    .nav-menu:not([open]) > .nav-menu__panel {
+      display: flex;
+    }
+
+    .nav-menu:not([open])::details-content {
+      content-visibility: visible;
+    }
+
+    .nav-menu__trigger {
+      display: none;
+    }
+
+    .nav-menu__panel {
+      display: flex;
+      align-items: center;
+      gap: var(--space-lg);
+    }
+
+    .nav-menu__list {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2xs);
+    }
+
+    .nav-menu__link {
+      display: inline-flex;
+      align-items: center;
+      min-height: var(--touch-target-min);
+      padding-inline: var(--space-sm);
+      border-radius: var(--radius-sm);
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-label);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    /* 悬停与当前页都不只靠颜色：悬停加下划线，当前页加下划线与字重 */
+    .nav-menu__link:hover {
+      color: var(--color-text-primary);
+      text-decoration-line: underline;
+    }
+
+    .nav-menu__link[aria-current='page'] {
+      color: var(--color-text-primary);
+      font-weight: var(--font-weight-semibold);
+      text-decoration-line: underline;
+      text-decoration-color: var(--color-accent);
+      text-decoration-thickness: 2px;
+    }
+
+    .nav-menu__extra {
+      display: flex;
+      align-items: center;
+    }
+  }
+</style>

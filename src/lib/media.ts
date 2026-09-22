@@ -143,25 +143,25 @@ export function selectHeroAsset(hero: HeroAssetPair, theme: Theme): MediaAsset {
 }
 
 export interface HeroManifestEntry {
-  readonly src: string
+  /** 构建期已解析好的地址（含 base），浏览器端不再做路径拼接 */
+  readonly href: string
   readonly width: number
   readonly height: number
 }
 
 /**
- * 首帧引导脚本用的最小清单：只含选图与预载必需的字段。
- * 不携带站点文案、替代文本或任何内容数据，避免把整站配置序列化进内联脚本。
+ * 首帧引导脚本用的最小清单：只含选图与预载必需的字段，且地址在构建期解析完毕，
+ * 因此内联脚本不必携带任何路径逻辑。不携带站点文案或内容数据。
  */
 export interface ThemeBootstrapManifest {
-  readonly base: string
   readonly hero: Readonly<Record<Theme, HeroManifestEntry>>
 }
 
 export function buildThemeManifest(hero: HeroAssetPair, base: string): ThemeBootstrapManifest {
   const toEntry = (asset: MediaAsset): HeroManifestEntry => ({
-    src: asset.src,
+    href: assetPath(base, asset.src),
     width: asset.width,
     height: asset.height,
   })
-  return { base, hero: { light: toEntry(hero.light), dark: toEntry(hero.dark) } }
+  return { hero: { light: toEntry(hero.light), dark: toEntry(hero.dark) } }
 }

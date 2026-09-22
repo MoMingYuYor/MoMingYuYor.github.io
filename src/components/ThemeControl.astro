@@ -1,0 +1,264 @@
+---
+/**
+ * 主题控件（计划 S1-T6）。
+ *
+ * 依据：规格第 11.4 节（模式选择用分段选项，主题选择明确呈现当前偏好，不要求用户猜测
+ * 循环顺序；图标采用统一的 Lucide 规格；主要触摸目标 44px；键盘焦点始终可见；颜色不是
+ * 选中状态的唯一标记）、第 9 节（站点头部与主题入口使用静态语义 HTML 和小型增强脚本，
+ * 不为文章页加载整套框架；主题偏好保留“跟随系统、浅色、深色”三态）、第 10 节（交互组件
+ * 逐项定义加载与降级规则）。
+ *
+ * 结构：原生 `<fieldset>` + 三个 `<input type="radio">`，语义、键盘方向键与选中播报都由
+ * 浏览器提供，不引入任何 UI 框架。当前档位由选中项的填充、描边、字重与图标色共同标记。
+ *
+ * 无脚本：可以选中，但主题不改变（计划 S1-T6 待确认项 8）。此时页面由 tokens.css 的
+ * `prefers-color-scheme` 兜底跟随系统，与默认选中的“跟随系统”一致，因此呈现不撒谎。
+ *
+ * 判定逻辑只来自 `src/lib/theme.ts`：存储键、偏好合法性、有效主题计算都不在这里重写。
+ *
+ * 已知取舍：初始 HTML 无法知道存储里的偏好，因此默认选中“跟随系统”，由本组件的模块脚本
+ * 在解析后立即同步为真实偏好。存储偏好为浅色/深色而系统为另一种时，控件本身可能有一帧
+ * 显示“跟随系统”。页面主题不受影响（首帧引导脚本在绘制前已生效）。
+ */
+interface ThemeOption {
+  readonly value: 'system' | 'light' | 'dark'
+  readonly label: string
+  /** 悬停提示：说明该档位的实际行为，不让用户从图标猜 */
+  readonly hint: string
+  /** Lucide 图标（24px 画板、线宽 2、圆头圆角、fill 为 none）；circle 为半径，无则省略 */
+  readonly icon: { readonly circle: number | null; readonly paths: readonly string[] }
+}
+
+const THEME_OPTIONS: readonly ThemeOption[] = [
+  {
+    value: 'system',
+    label: '跟随系统',
+    hint: '跟随系统外观：系统切到深色时页面也变深色',
+    // Lucide `sun-moon`
+    icon: {
+      circle: null,
+      paths: [
+        'M12 8a2.83 2.83 0 0 0 4 4 4 4 0 1 1-4-4',
+        'M12 2v2',
+        'M12 20v2',
+        'm4.9 4.9 1.4 1.4',
+        'm17.7 17.7 1.4 1.4',
+        'M2 12h2',
+        'M20 12h2',
+        'm6.3 17.7-1.4 1.4',
+        'm19.1 4.9-1.4 1.4',
+      ],
+    },
+  },
+  {
+    value: 'light',
+    label: '浅色',
+    hint: '始终使用浅色外观，不跟随系统',
+    // Lucide `sun`
+    icon: {
+      circle: 4,
+      paths: [
+        'M12 2v2',
+        'M12 20v2',
+        'm4.93 4.93 1.41 1.41',
+        'm17.66 17.66 1.41 1.41',
+        'M2 12h2',
+        'M20 12h2',
+        'm6.34 17.66-1.41 1.41',
+        'm19.07 4.93-1.41 1.41',
+      ],
+    },
+  },
+  {
+    value: 'dark',
+    label: '深色',
+    hint: '始终使用深色外观，不跟随系统',
+    // Lucide `moon`
+    icon: { circle: null, paths: ['M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z'] },
+  },
+]
+
+---
+
+<fieldset class="theme-control" data-theme-control>
+  <legend class="visually-hidden">主题偏好</legend>
+  {
+    THEME_OPTIONS.map((option) => (
+      <label class="theme-control__option" title={option.hint}>
+        <input
+          class="theme-control__input"
+          type="radio"
+          name="theme-preference"
+          value={option.value}
+          checked={option.value === 'system'}
+        />
+        <svg
+          class="theme-control__icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          {option.icon.circle === null ? null : <circle cx="12" cy="12" r={option.icon.circle} />}
+          {option.icon.paths.map((d) => (
+            <path d={d} />
+          ))}
+        </svg>
+        <span class="theme-control__text">{option.label}</span>
+      </label>
+    ))
+  }
+</fieldset>
+
+<script>
+  /**
+   * 主题控件增强（规格第 9、11.4 节）：把选中的档位写成偏好，并切换根元素主题。
+   * 只消费 `src/lib/theme.ts` 的规则，不在这里重写判定逻辑。
+   */
+  import {
+    THEME_STORAGE_KEY,
+    isThemePreference,
+    readStoredPreference,
+    resolveTheme,
+    type ThemePreference,
+  } from '../lib/theme'
+
+  const CONTROL_SELECTOR = '[data-theme-control]'
+  const DARK_QUERY = '(prefers-color-scheme: dark)'
+
+  /** 系统是否为深色；matchMedia 缺失或抛错时按浅色处理（与首帧引导脚本一致） */
+  function systemIsDark(): boolean {
+    try {
+      return typeof window.matchMedia === 'function' && window.matchMedia(DARK_QUERY).matches
+    } catch {
+      return false
+    }
+  }
+
+  /** 应用有效主题：写入根元素 data-theme 与 color-scheme，与首帧引导脚本同一套写法 */
+  function applyTheme(preference: ThemePreference): void {
+    const theme = resolveTheme(preference, systemIsDark())
+    const root = document.documentElement
+    root.dataset.theme = theme
+    root.style.setProperty('color-scheme', theme)
+  }
+
+  /** 读存储偏好；readStoredPreference 内部已捕获存储异常并回退 'system' */
+  function readPreference(): ThemePreference {
+    return readStoredPreference((key) => window.localStorage.getItem(key))
+  }
+
+  for (const control of document.querySelectorAll<HTMLFieldSetElement>(CONTROL_SELECTOR)) {
+    const inputs = Array.from(control.querySelectorAll<HTMLInputElement>('input[type="radio"]'))
+
+    /** 呈现当前偏好：把存储里的偏好同步到选中项 */
+    const showPreference = (preference: ThemePreference): void => {
+      for (const input of inputs) input.checked = input.value === preference
+    }
+
+    showPreference(readPreference())
+
+    control.addEventListener('change', (event) => {
+      const target = event.target
+      if (!(target instanceof HTMLInputElement) || !target.checked) return
+      if (!isThemePreference(target.value)) return
+      try {
+        window.localStorage.setItem(THEME_STORAGE_KEY, target.value)
+      } catch {
+        // 存储不可用（隐私模式、被禁用）时仍然切换当前页面的主题，只是不持久化
+      }
+      applyTheme(target.value)
+    })
+  }
+
+  // 偏好为“跟随系统”时随系统外观实时变化；显式选定的浅色/深色不受系统变化影响
+  try {
+    window.matchMedia(DARK_QUERY).addEventListener('change', () => {
+      if (readPreference() === 'system') applyTheme('system')
+    })
+  } catch {
+    // matchMedia 不可用时不做实时跟随，首帧引导与显式档位仍然生效
+  }
+</script>
+
+<style>
+  /*
+   * 分段选项：三段共用一个外框。选中项用填充 + 内描边（形状）、字重（文字标记）与
+   * 图标着色共同标记，颜色不是唯一标记（规格第 11.4 节）。
+   */
+  .theme-control {
+    display: flex;
+    flex-wrap: wrap; /* 文字放大时换行，不撑出横向滚动 */
+    gap: var(--space-2xs);
+    /* fieldset 的 UA 默认值：外框、内边距与 min-content 最小宽度都要清掉，
+       min-content 会阻止分段在窄屏收缩 */
+    min-inline-size: 0;
+    margin: 0;
+    padding: var(--space-2xs);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-content);
+  }
+
+  .theme-control__option {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    min-height: var(--touch-target-min);
+    padding-inline: var(--space-sm);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-label);
+    line-height: var(--line-height-ui);
+    cursor: pointer;
+  }
+
+  /* 原生 radio 保留语义与键盘行为（方向键、选中播报），视觉隐藏但仍可聚焦 */
+  .theme-control__input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  /* 键盘焦点始终可见：radio 本身被视觉隐藏，焦点轮廓画在整段上 */
+  .theme-control__option:focus-within {
+    outline: var(--focus-ring-width) solid var(--color-focus-ring);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  .theme-control__option:hover {
+    color: var(--color-text-primary);
+  }
+
+  .theme-control__icon {
+    width: 18px;
+    height: 18px;
+    flex: none;
+  }
+
+  /* 选中：字重（文字标记）与图标色 */
+  .theme-control__input:checked ~ .theme-control__text {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .theme-control__input:checked ~ .theme-control__icon {
+    color: var(--color-accent);
+  }
+
+  /* 选中：填充 + 内描边（形状标记）。不支持 :has() 时仍有字重与图标色标记 */
+  .theme-control__option:has(.theme-control__input:checked) {
+    background: var(--color-surface-muted);
+    box-shadow: inset 0 0 0 var(--border-width) var(--color-accent);
+  }
+</style>

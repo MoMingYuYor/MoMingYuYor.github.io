@@ -1,0 +1,84 @@
+---
+/**
+ * 404 页（规格第 2、12 节；计划 S1-T10）。
+ *
+ * 静态托管下由构建产物 `dist/404.html` 承担真实"未找到"状态（规格第 16 节：
+ * 不依赖客户端通配路由掩盖 404），因此本页是普通静态页面，不含任何重定向脚本。
+ *
+ * 返回入口只有首页一个：站内其余一级路径由页头导航承担，本页不重复堆叠链接，
+ * 也不输出指向尚不存在的路径的链接。
+ */
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { identity } from '../lib/site'
+import { sitePath } from '../lib/paths'
+
+const pageTitle = `页面未找到 · ${identity.brand}`
+const pageDescription = '该地址没有对应页面。返回首页继续浏览作品、硬件与文章。'
+
+/** 首页地址经统一路径函数生成，不硬编码 base（子路径部署时同样正确） */
+const homeHref = sitePath(import.meta.env.BASE_URL)
+---
+
+<BaseLayout title={pageTitle} description={pageDescription}>
+  <div class="container">
+    <div class="not-found">
+      <p class="not-found__code">404</p>
+      <h1 class="not-found__title">未找到该页面</h1>
+      <p class="not-found__lead">这个地址没有对应内容，它可能已经改名或不再存在。</p>
+      <p class="not-found__actions">
+        <a class="not-found__home" href={homeHref}>返回首页</a>
+      </p>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .not-found {
+    padding-block: var(--space-3xl);
+  }
+
+  /* 编号是金色允许的少量用途之一：小面积、非大面积表面 */
+  .not-found__code {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-caption);
+    line-height: var(--line-height-ui);
+    color: var(--color-accent-gold);
+  }
+
+  .not-found__title {
+    margin-block: var(--space-xs) var(--space-md);
+  }
+
+  .not-found__lead {
+    max-width: 36em; /* 中文约 36 字/行 */
+    color: var(--color-text-secondary);
+  }
+
+  .not-found__actions {
+    margin-block-start: var(--space-xl);
+  }
+
+  /*
+   * 返回入口是链接而非按钮（导航用链接），用细描边标出主要动作；
+   * 圆角取自 --radius-md（不超过 8px），触摸目标不小于 44px。
+   */
+  .not-found__home {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--touch-target-min);
+    padding-inline: var(--space-lg);
+    border: var(--divider);
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-medium);
+    text-decoration: none;
+    transition: border-color var(--duration-fast) var(--easing-standard);
+  }
+
+  .not-found__home:hover {
+    border-color: var(--color-accent);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+  }
+</style>

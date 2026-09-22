@@ -1,0 +1,322 @@
+---
+/**
+ * 首页身份区与山湖主视觉（S1-T8）。
+ *
+ * 设计依据：规格第 3 节（H1 为 MoMingYu、方向为关注与求职方向、主要入口「查看作品」与「联系我」、
+ * 简历入口缺失时直接省略）、第 11.1 节（全幅图片背景上的开放排版，姓名与入口不套卡片，
+ * 局部遮罩只服务文字可读性）、第 11.2 节（首屏不强制 100vh，须露出下一节标题）、
+ * 第 9 节（预载与实际渲染复用同一媒体描述）。
+ *
+ * 主题选图：`<source media>` 只能表达系统外观，读不到 `data-theme`。因此
+ * 「跟随系统」时保留 `<source>` 由浏览器原生处理；访客显式选定偏好时由页面脚本
+ * 接管选图，并等目标图解码完成再提交，失败则保留已成功显示的图。
+ */
+import { contacts, hero, identity, seo } from '../../lib/site'
+import { imgAttributes } from '../../lib/media'
+import { sitePath } from '../../lib/paths'
+import { formatMonthDay, formatWeekday, formatYear, greetingFor, isoDate } from '../../lib/datetime'
+
+const base = import.meta.env.BASE_URL
+const light = imgAttributes(hero.light, base, { priority: true })
+const dark = imgAttributes(hero.dark, base, { priority: true })
+
+/** 构建期日期与问候：无脚本时的回退文本，加载后由脚本按访客本地时间重算 */
+const builtAt = new Date()
+const dateText = {
+  iso: isoDate(builtAt),
+  monthDay: formatMonthDay(builtAt),
+  year: formatYear(builtAt),
+  weekday: formatWeekday(builtAt, seo.locale),
+  greeting: greetingFor(builtAt.getHours()),
+}
+
+const projectsHref = sitePath(base, 'projects')
+/** 联系我直达已核验的邮箱；缺失时不渲染该入口，不留失效按钮 */
+const mailContact = contacts.find((contact) => contact.icon === 'mail')
+---
+
+<section class="hero" aria-labelledby="hero-name">
+  <div class="hero__media">
+    <picture class="hero__picture" data-hero-picture>
+      <source
+        media="(prefers-color-scheme: dark)"
+        data-hero-source
+        data-system-media="(prefers-color-scheme: dark)"
+        srcset={dark.src}
+      />
+      <img
+        class="hero__image"
+        data-hero-image
+        data-light-src={light.src}
+        data-dark-src={dark.src}
+        src={light.src}
+        alt={light.alt}
+        width={light.width}
+        height={light.height}
+        loading={light.loading}
+        decoding={light.decoding}
+        {...(light.fetchpriority ? { fetchpriority: light.fetchpriority } : {})}
+      />
+    </picture>
+  </div>
+
+  <div class="hero__content container">
+    <p class="hero__meta">
+      <time class="hero__date" datetime={dateText.iso} data-hero-date>
+        <span data-hero-month-day>{dateText.monthDay}</span>
+        <span class="hero__date-year" data-hero-year>{dateText.year}</span>
+      </time>
+      <span class="hero__meta-sep" aria-hidden="true">·</span>
+      <span data-hero-weekday>{dateText.weekday}</span>
+      <span class="hero__meta-sep" aria-hidden="true">·</span>
+      <span data-hero-greeting>{dateText.greeting}</span>
+    </p>
+
+    <h1 class="hero__name display-name" id="hero-name">{identity.brand}</h1>
+    <p class="hero__direction">{identity.direction}</p>
+    <p class="hero__tagline">{identity.tagline}</p>
+
+    <p class="hero__actions">
+      <a class="hero__action hero__action--primary touch-target" href={projectsHref}>查看作品</a>
+      {
+        mailContact ? (
+          <a class="hero__action touch-target" href={mailContact.href}>
+            联系我
+          </a>
+        ) : null
+      }
+    </p>
+  </div>
+</section>
+
+<script>
+  import { readStoredPreference, resolveTheme, type Theme } from '../../lib/theme'
+  import { formatMonthDay, formatWeekday, formatYear, greetingFor, isoDate } from '../../lib/datetime'
+
+  /** 日期与问候在加载时求值一次；不用定时器，访客停留期间跨零点不更新是可接受的 */
+  const locale = document.documentElement.lang || 'zh-CN'
+  const now = new Date()
+  const setText = (name: string, text: string): void => {
+    const el = document.querySelector<HTMLElement>(`[data-hero-${name}]`)
+    if (el) el.textContent = text
+  }
+  setText('month-day', formatMonthDay(now))
+  setText('year', formatYear(now))
+  setText('weekday', formatWeekday(now, locale))
+  setText('greeting', greetingFor(now.getHours()))
+  const timeEl = document.querySelector<HTMLTimeElement>('[data-hero-date]')
+  if (timeEl) timeEl.dateTime = isoDate(now)
+
+  const picture = document.querySelector<HTMLPictureElement>('[data-hero-picture]')
+  const image = picture?.querySelector<HTMLImageElement>('[data-hero-image]') ?? null
+  const sources = picture ? Array.from(picture.querySelectorAll<HTMLSourceElement>('[data-hero-source]')) : []
+
+  function systemIsDark(): boolean {
+    try {
+      return typeof window.matchMedia === 'function'
+        ? window.matchMedia('(prefers-color-scheme: dark)').matches
+        : false
+    } catch {
+      return false
+    }
+  }
+
+  /** 请求序号：只提交最后一次请求的结果，避免快速连续切换时旧结果覆盖新结果 */
+  let requestId = 0
+
+  async function commitThemeImage(theme: Theme): Promise<void> {
+    if (!image) return
+    const target = theme === 'dark' ? image.dataset.darkSrc : image.dataset.lightSrc
+    if (!target || image.getAttribute('src') === target) return
+
+    const current = ++requestId
+    const probe = new Image()
+    probe.src = target
+    try {
+      await probe.decode()
+    } catch {
+      // 目标图失败：保留已成功显示的图，不让正常切换表现为资源故障
+      return
+    }
+    if (current !== requestId) return
+    image.setAttribute('src', target)
+  }
+
+  function syncHeroImage(): void {
+    const preference = readStoredPreference((key) => window.localStorage.getItem(key))
+    if (preference === 'system') {
+      // 交还给 <source> 的媒体查询，让浏览器原生跟随系统外观变化
+      for (const source of sources) {
+        const original = source.dataset.systemMedia
+        if (original) source.setAttribute('media', original)
+      }
+      return
+    }
+    // 显式偏好：屏蔽 <source>，改由脚本按 data-theme 选图
+    for (const source of sources) source.setAttribute('media', 'not all')
+    void commitThemeImage(resolveTheme(preference, systemIsDark()))
+  }
+
+  syncHeroImage()
+
+  // 主题控件改变 data-theme 后同步换图（等解码完成再提交）
+  new MutationObserver(syncHeroImage).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme'],
+  })
+</script>
+
+<style>
+  .hero {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    /*
+     * 不强制 100vh：高度由视口、内容与下一节的可见空间共同决定（规格 11.2）。
+     * 上限 600px 是为了在 320×680 这类短屏上仍能露出下一节的标题——
+     * 实测 320×680 下主视觉底部 + 首个分区的编号与标题需要约 90px 才够。
+     */
+    min-block-size: min(70svh, 600px);
+    overflow: hidden;
+    background-color: var(--color-surface-page);
+  }
+
+  .hero__media {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .hero__picture,
+  .hero__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .hero__image {
+    object-fit: cover;
+    object-position: 50% 50%;
+  }
+
+  /*
+   * 文字组局部遮罩：只服务文字可读性，不把整张图统一压暗（规格 11.1）。
+   * 遮罩覆盖下部文字所在的条带，上半部风景保持原样。
+   */
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    block-size: 62%;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      to top,
+      var(--color-overlay-scrim) 0%,
+      color-mix(in srgb, var(--color-overlay-scrim) 55%, transparent) 45%,
+      transparent 100%
+    );
+  }
+
+  .hero__content {
+    position: relative;
+    z-index: 2;
+    padding-block: var(--space-2xl) var(--space-3xl);
+    color: var(--color-accent-contrast);
+  }
+
+  /* 日期与问候：次要元素，一行紧凑呈现，不与姓名、入口并列成大面板（规格第 3 节） */
+  .hero__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2xs);
+    margin-block-end: var(--space-md);
+    font-size: var(--font-size-label);
+    letter-spacing: var(--letter-spacing-normal);
+    opacity: 0.92;
+  }
+
+  .hero__date {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-2xs);
+  }
+
+  .hero__date-year {
+    font-size: var(--font-size-caption, var(--font-size-label));
+    opacity: 0.8;
+  }
+
+  .hero__meta-sep {
+    opacity: 0.6;
+  }
+
+  .hero__name {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: var(--font-size-name);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    letter-spacing: var(--letter-spacing-normal);
+  }
+
+  .hero__direction {
+    margin-block-start: var(--space-sm);
+    font-size: var(--font-size-body-lg);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .hero__tagline {
+    max-width: 30em;
+    margin-block-start: var(--space-xs);
+    font-size: var(--font-size-body);
+    opacity: 0.92;
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-block-start: var(--space-xl);
+  }
+
+  .hero__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding-inline: var(--space-lg);
+    border: var(--border-width) solid currentColor;
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-medium);
+    text-decoration: none;
+    transition: background-color var(--duration-fast) var(--easing-standard);
+  }
+
+  .hero__action--primary {
+    border-color: transparent;
+    background-color: var(--color-accent);
+    color: var(--color-accent-contrast);
+  }
+
+  /* 窄屏按 640px 图片断点切换裁切焦点，让湖面主体保持在视野内 */
+  @media (max-width: 640px) {
+    .hero__image {
+      object-position: 60% 50%;
+    }
+
+    .hero__content {
+      padding-block: var(--space-xl) var(--space-2xl);
+    }
+
+    .hero__meta {
+      margin-block-end: var(--space-sm);
+    }
+
+    .hero__actions {
+      margin-block-start: var(--space-lg);
+    }
+  }
+</style>

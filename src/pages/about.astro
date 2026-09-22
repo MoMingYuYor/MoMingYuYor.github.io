@@ -1,0 +1,126 @@
+---
+/**
+ * 关于页（规格第 2、3、11.2、12 节；计划 S1-T10）。
+ *
+ * 内容边界（硬约束）：本人自述、经历、学历、任职、年限与项目业绩一律不由开发代理补写。
+ * 真实资料由本人提供（第四阶段 S4-T2）后填入下方带 `data-about-bio` / `data-about-history`
+ * 标记的接入点，替换其中的空状态段落即可，本页结构与样式无需调整。
+ *
+ * 当前可写的只有 `src/lib/site.ts` 中已确认的内容：`identity.direction`、`identity.tagline`
+ * 与 `contacts`。其余栏目呈现诚实空状态，不用演示段落占位。
+ *
+ * 联系入口在本页只出现一次（规格第 3 节：关于页提供一次明确、不过度打扰的联系入口，
+ * 不使用弹窗强迫联系），因此不在本页其他位置重复堆叠联系方式。
+ */
+import BaseLayout from '../layouts/BaseLayout.astro'
+import ContactEntry from '../components/ContactEntry.astro'
+import { contacts, identity } from '../lib/site'
+
+const pageTitle = `关于 · ${identity.brand}`
+const pageDescription = `${identity.brand} 的关注方向、自述与联系入口：${identity.direction}。`
+
+/**
+ * 联系入口的第二行文字：邮件显示地址本身，外链显示主机与路径。
+ * 与第一行标签共同构成链接的可访问名称，避免只靠图标或"邮箱"两字表达目标。
+ */
+function contactDetail(href: string): string {
+  if (href.startsWith('mailto:')) return href.slice('mailto:'.length)
+  try {
+    const url = new URL(href)
+    return `${url.hostname}${url.pathname}`.replace(/\/+$/, '')
+  } catch {
+    return href
+  }
+}
+---
+
+<BaseLayout title={pageTitle} description={pageDescription}>
+  <div class="container">
+    <header class="about-intro">
+      <h1 class="about-intro__title">关于</h1>
+      <p class="about-intro__lead">{identity.tagline}</p>
+    </header>
+
+    <section class="section" aria-labelledby="about-direction">
+      <h2 class="about-section__title" id="about-direction">关注方向</h2>
+      <p class="about-direction">{identity.direction}</p>
+      <p class="about-section__note">当前关注与求职方向；本站的作品、硬件与文章都围绕它展开。</p>
+    </section>
+
+    <!-- 接入点（第四阶段 S4-T2）：真实自述到位后，替换本节的空状态段落 -->
+    <section class="section" aria-labelledby="about-bio" data-about-bio>
+      <h2 class="about-section__title" id="about-bio">自述</h2>
+      <p class="about-empty">自述内容尚未公开。</p>
+    </section>
+
+    <!-- 接入点（第四阶段 S4-T2）：真实经历到位后，替换本节的空状态段落 -->
+    <section class="section" aria-labelledby="about-history" data-about-history>
+      <h2 class="about-section__title" id="about-history">经历</h2>
+      <p class="about-empty">经历记录尚未公开。</p>
+    </section>
+
+    <section class="section" aria-labelledby="about-contact">
+      <h2 class="about-section__title" id="about-contact">联系</h2>
+      <p class="about-section__note">邮件与 GitHub 是当前公开的联系方式。</p>
+      <!-- 复用 S1-T7 的联系入口组件：外链策略、图标规格与可访问名称只有一处实现 -->
+      <ul class="contact-list list-plain">
+        {
+          contacts.map((contact) => (
+            <li class="contact-list__item">
+              <ContactEntry
+                label={contact.label}
+                href={contact.href}
+                icon={contact.icon}
+                external={contact.external}
+                detail={contactDetail(contact.href)}
+              />
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  /* 页首区块：不画分隔线，纵向留白略小于正文分区，让 H1 靠近页头 */
+  .about-intro {
+    padding-block: var(--space-2xl) var(--space-3xl);
+  }
+
+  .about-intro__lead {
+    max-width: 36em; /* 中文约 36 字/行 */
+    margin-block-start: var(--space-md);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-body-lg);
+  }
+
+  .about-section__title {
+    margin-block-end: var(--space-md);
+  }
+
+  .about-section__note {
+    max-width: 36em;
+    color: var(--color-text-secondary);
+  }
+
+  /* 关注方向：全页唯一的强调句，用字重而非字号区分，不引入新的字号档位 */
+  .about-direction {
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  /* 诚实空状态：只用次要文字色，不做成提示框、不写编辑说明 */
+  .about-empty {
+    max-width: 36em;
+    color: var(--color-text-secondary);
+  }
+
+  /* 联系入口的排布：条目本身由 ContactEntry 提供，本页只负责列表间距 */
+  .contact-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md) var(--space-xl);
+    margin-block-start: var(--space-lg);
+  }
+</style>

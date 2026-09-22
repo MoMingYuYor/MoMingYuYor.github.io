@@ -1,0 +1,30 @@
+---
+/**
+ * 页面级元数据。每个公开页面都有独立标题、摘要与 canonical。
+ * 分享图（og:image）与 og:url、结构化数据的贯通由第二阶段 S2-T9 扩展；
+ * 本组件已接受 shareImage 并在有值时输出 og:image，站点配置当前为 null。
+ */
+interface Props {
+  title: string
+  description: string
+  canonical: string
+  locale: string
+  siteName: string
+  noindex: boolean
+  /** 站点品牌分享图；来源与授权未定时为 null，此时不输出 og:image */
+  shareImage?: string | null
+}
+
+const { title, description, canonical, locale, siteName, noindex, shareImage = null } = Astro.props
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{noindex ? <meta name="robots" content="noindex, nofollow" /> : null}
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={siteName} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:locale" content={locale.replace('-', '_')} />
+{shareImage ? <meta property="og:image" content={shareImage} /> : null}

@@ -1,0 +1,88 @@
+---
+/**
+ * 硬件索引骨架（计划 S1-T9；规格第 2、5、6、11.2 节）。
+ *
+ * 本页当前是最小可用骨架：真实标题、DIY 与超频两个内容方向、诚实空状态、返回入口。
+ * 零公开记录时不渲染空列表容器、不造假封面、不造假跑分（规格第 2 节；A05）。
+ *
+ * 硬约束：指向 `/hardware/builds/` 与 `/hardware/overclocking/` 的链接由第三阶段 S3-T8
+ * 在分区页建立之后接入。本阶段这两个路径不存在，因此本页只用文字说明两个方向，
+ * **不输出指向它们的链接**（不产生 404 入口）。
+ *
+ * 接入点（第三阶段 S3-T8）：在两个标记为 `data-hardware-builds` / `data-hardware-overclocking`
+ * 的分区内就地接入各自的分区入口与真实记录，替换其中的空状态段落；
+ * 页首标题、摘要、章节头与返回入口保持不变。
+ *
+ * 内容边界：两个方向的说明文字只陈述记录包含什么，不写操作建议、教程或编辑提示（规格第 11.4 节）。
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import SectionHeader from '../../components/SectionHeader.astro'
+import { sitePath } from '../../lib/paths'
+import { identity } from '../../lib/site'
+
+/** 首页地址经统一路径函数生成，不硬编码 base（子路径部署时同样正确） */
+const homeHref = sitePath(import.meta.env.BASE_URL)
+
+const pageTitle = `硬件 · ${identity.brand}`
+const pageDescription = `${identity.brand} 的电脑 DIY 与硬件超频记录索引：装机配置、装机过程与超频实验结果。`
+---
+
+<BaseLayout title={pageTitle} description={pageDescription}>
+  <div class="container">
+    <header class="index-intro">
+      <h1 class="index-intro__title">硬件</h1>
+      <p class="index-intro__lead">电脑 DIY 与硬件超频实践。</p>
+    </header>
+
+    <!-- 接入点（第三阶段 S3-T8）：接入装机记录索引与真实记录，替换本节空状态 -->
+    <section class="section" aria-labelledby="hardware-builds" data-hardware-builds>
+      <SectionHeader
+        number="01"
+        title="装机记录"
+        lead="按用途与约束记录一台机器的配置选择、装机过程与使用结果。"
+        id="hardware-builds"
+      />
+      <p class="index-empty">暂无公开装机记录。</p>
+    </section>
+
+    <!-- 接入点（第三阶段 S3-T8）：接入超频实验索引与真实记录，替换本节空状态 -->
+    <section class="section" aria-labelledby="hardware-overclocking" data-hardware-overclocking>
+      <SectionHeader
+        number="02"
+        title="超频实验"
+        lead="记录一次实验的测试平台、参数配置、测量结果与结论。"
+        id="hardware-overclocking"
+      />
+      <p class="index-empty">暂无公开超频记录。</p>
+    </section>
+
+    <p class="index-back">
+      <a class="touch-target" href={homeHref}>返回首页</a>
+    </p>
+  </div>
+</BaseLayout>
+
+<style>
+  /* 页首区块：不画分隔线，H1 靠近页头，与关于页保持同一节奏 */
+  .index-intro {
+    padding-block: var(--space-2xl) var(--space-3xl);
+  }
+
+  .index-intro__lead {
+    max-width: 36em; /* 中文约 36 字/行 */
+    margin-block-start: var(--space-md);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-body-lg);
+  }
+
+  /* 诚实空状态：只用次要文字色，不做成提示框、不写编辑说明 */
+  .index-empty {
+    max-width: 36em;
+    color: var(--color-text-secondary);
+  }
+
+  /* 返回入口：独立于页头导航的显式回路；触摸目标由全局 .touch-target 保证 44px */
+  .index-back {
+    padding-block-end: var(--space-3xl);
+  }
+</style>

@@ -1,0 +1,54 @@
+---
+/**
+ * 章节头（计划 S1-T9）。首页五个章节与三个栏目索引页共用同一实现，第二、三阶段复用不重建。
+ *
+ * 依据：规格第 11.2 节（作品、硬件、文章与关于采用 unframed 分区，以细分隔线、标题与留白组织）、
+ * 第 11.3 节（金色只承担少量编号、细线与图片呼应，不作大面积表面；主要章节标题保留衬线气质）、
+ * 第 2 节（栏目索引页结构与首页章节一致）。
+ *
+ * 排版来自全局样式的 `.section-header` / `__number` / `__title` / `__lead`
+ * （`src/styles/global.css` 第 5 节），本组件只提供结构与一处间距微调，
+ * 不重定义这三个类名的字号、字重、颜色与行宽——这样首页与三个栏目索引页共享同一套排版，
+ * 后续阶段接入真实数据时也不必各自调标题样式。
+ *
+ * 语义：标题固定为 `h2`。页面的 `h1` 由页面自己提供（首页为姓名，栏目索引页为栏目名），
+ * 章节头只表达分区层级，因此不提供 headingLevel 一类的可配置项，
+ * 避免同一层级在不同页面出现两种标题语义。
+ *
+ * 无脚本：纯静态结构，不依赖任何脚本注入内容。
+ */
+interface Props {
+  title: string
+  /** 可选编号，如 "01"；金色只用于这种小面积装饰（规格 11.3） */
+  number?: string
+  /** 可选引导句 */
+  lead?: string
+  /** 章节标题的 id，供 section 的 aria-labelledby 引用 */
+  id?: string
+}
+
+const { title, number, lead, id } = Astro.props
+
+/**
+ * `id` 未传入时不输出 id 属性，也不产生空锚点。
+ * 用条件展开而不是 `id={undefined}`，省略属性由这里决定，不依赖模板引擎对 undefined 的处理。
+ */
+const titleAttrs = id ? { id } : {}
+---
+
+<div class="section-header">
+  {number ? <p class="section-header__number">{number}</p> : null}
+  <h2 class="section-header__title" {...titleAttrs}>{title}</h2>
+  {lead ? <p class="section-header__lead">{lead}</p> : null}
+</div>
+
+<style>
+  /*
+   * 唯一的间距微调：编号与标题视作一组，保持全局 grid gap 的一档（8px）；
+   * 标题到引导句再留一档（共 16px），使标题从编号与引导句之间浮出来。
+   * 字号、字重、颜色、行高与行宽全部沿用全局 .section-header* 的定义，此处不重写。
+   */
+  .section-header__lead {
+    margin-block-start: var(--space-xs);
+  }
+</style>

@@ -1,0 +1,94 @@
+---
+/**
+ * 通用媒体图（S1-T8）。所有响应式字段从 `src/lib/media.ts` 的同一份描述派生，
+ * 使预载与 `<picture>` 选到同一个文件。第三阶段 S3-T4 会在此增补正文图片能力。
+ */
+import { imgAttributes, srcsetOf, sizesOf, objectPositionOf, HERO_NARROW_QUERY } from '../lib/media'
+import type { MediaAsset } from '../lib/media'
+
+interface Props {
+  asset: MediaAsset
+  /** 首屏图片传 true：改为 eager 加载并声明高优先级 */
+  priority?: boolean
+  /** 说明文字（截图类必填，用于 figcaption） */
+  caption?: string
+  /** 素材来源记录（规格第 5 节要求每张图有来源） */
+  credit?: string
+  /** 覆盖默认 sizes */
+  sizes?: string
+  /** 是否按窄视口切换裁切焦点 */
+  narrow?: boolean
+}
+
+const { asset, priority = false, caption, credit, sizes, narrow = false } = Astro.props
+const base = import.meta.env.BASE_URL
+const image = imgAttributes(asset, base, { priority })
+const resolvedSizes = sizes ?? sizesOf(asset)
+const position = objectPositionOf(asset, narrow)
+const hasCaption = Boolean(caption || credit)
+---
+
+<figure class="media-figure">
+  <picture class="media-figure__picture">
+    {
+      asset.candidates && asset.candidates.length > 0 ? (
+        <source
+          srcset={srcsetOf(asset, base)}
+          {...(resolvedSizes ? { sizes: resolvedSizes } : {})}
+          media={HERO_NARROW_QUERY}
+        />
+      ) : null
+    }
+    <img
+      class="media-figure__image"
+      src={image.src}
+      alt={image.alt}
+      width={image.width}
+      height={image.height}
+      loading={image.loading}
+      decoding={image.decoding}
+      {...(image.srcset ? { srcset: image.srcset } : {})}
+      {...(resolvedSizes ? { sizes: resolvedSizes } : {})}
+      {...(position ? { style: `object-position: ${position}` } : {})}
+    />
+  </picture>
+  {
+    hasCaption ? (
+      <figcaption class="media-figure__caption">
+        {caption ? <span class="media-figure__caption-text">{caption}</span> : null}
+        {credit ? <span class="media-figure__credit">{credit}</span> : null}
+      </figcaption>
+    ) : null
+  }
+</figure>
+
+<style>
+  .media-figure {
+    margin: 0;
+  }
+
+  .media-figure__picture {
+    display: block;
+  }
+
+  /* 截图默认完整显示（不裁切），摄影素材由调用点传裁切焦点 */
+  .media-figure__image {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm);
+  }
+
+  .media-figure__caption {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs) var(--space-sm);
+    margin-block-start: var(--space-xs);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-caption, var(--font-size-label));
+  }
+
+  .media-figure__credit {
+    color: var(--color-text-secondary);
+  }
+</style>

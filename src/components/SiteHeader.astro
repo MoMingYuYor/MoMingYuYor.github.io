@@ -1,0 +1,90 @@
+---
+/**
+ * 站点页头（计划 S1-T6）。由 `src/layouts/BaseLayout.astro` 渲染在所有公开页面顶部。
+ *
+ * 依据：规格第 2 节（主导航固定为“首页、作品、硬件、博客、关于”，品牌使用 `MoMingYu`，
+ * 不随主题改变）、第 3 与 11.4 节（主题状态只出现在主题控件里，不放进品牌位——这是旧实现
+ * 已确认的身份表达缺陷）、第 9 节（站点头部与主题入口使用静态语义 HTML 和小型增强脚本）、
+ * 第 11.1 节（玻璃只用于固定导航与必要浮层）、第 11.4 节（触摸目标 44px、键盘焦点可见）。
+ *
+ * 组合：品牌位 + `NavMenu`（导航面板内由默认插槽放入 `ThemeControl`）。
+ * 窄屏页头一行只有品牌与菜单触发器，主题控件随菜单展开；桌面端三者同排常驻。
+ * 这样 320px 下页头不会被三个主题分段挤出横向滚动，200% 文字缩放时也只需换行。
+ *
+ * 品牌位不承载任何主题状态：`identity.brand` 是唯一内容，也不随主题改写。
+ */
+import NavMenu from './NavMenu.astro'
+import ThemeControl from './ThemeControl.astro'
+import { sitePath } from '../lib/paths'
+import { identity } from '../lib/site'
+
+const base = import.meta.env.BASE_URL
+/** 首页路径：`sitePath` 不传段时返回 base 本身（统一尾斜杠） */
+const homeHref = sitePath(base)
+---
+
+<header class="site-header">
+  <div class="site-header__inner container">
+    <a class="site-header__brand" href={homeHref}>{identity.brand}</a>
+    <NavMenu currentPath={Astro.url.pathname}>
+      <ThemeControl />
+    </NavMenu>
+  </div>
+</header>
+
+<style>
+  /*
+   * 固定导航：吸附在视口顶部，玻璃底色保证任何页面背景上的文字对比度。
+   * `--header-block-size` 供 NavMenu 计算窄屏面板的最大高度（面板不越过视口）。
+   */
+  .site-header {
+    --header-block-size: 60px;
+    position: sticky;
+    top: 0;
+    z-index: var(--z-index-header);
+    background: var(--color-surface-glass);
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    backdrop-filter: blur(var(--glass-blur));
+    border-block-end: var(--divider);
+  }
+
+  /* 不支持背景模糊时退回不透明底色（规格第 11.1 节） */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .site-header {
+      background: var(--color-surface-content);
+    }
+  }
+
+  /*
+   * 一行布局：品牌在左，导航与主题控件在右。允许换行，200% 文字缩放时改为两行，
+   * 不把内容挤出视口（规格第 13 节：除局部滚动容器外不允许整页横向溢出）。
+   */
+  .site-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-xs) var(--space-md);
+    flex-wrap: wrap;
+    min-height: var(--header-block-size);
+    padding-block: var(--space-xs);
+  }
+
+  /* 品牌位：衬线字重加粗，44px 触摸目标，不随主题改变内容 */
+  .site-header__brand {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--touch-target-min);
+    font-family: var(--font-serif);
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-ui);
+    letter-spacing: var(--letter-spacing-normal);
+    color: var(--color-text-primary);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .site-header__brand:hover {
+    text-decoration-line: underline;
+  }
+</style>

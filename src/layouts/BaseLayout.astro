@@ -1,0 +1,52 @@
+---
+/**
+ * 站点骨架布局。所有公开页面经它渲染，页面只提供标题、摘要与正文。
+ * 主题由 astro.config.mjs 的集成内联进 <head>（同步执行，首次绘制前生效）。
+ */
+import SeoHead from '../components/SeoHead.astro'
+import SiteFooter from '../components/SiteFooter.astro'
+import SiteHeader from '../components/SiteHeader.astro'
+import { identity, seo, siteOrigin } from '../lib/site'
+import '../styles/global.css'
+
+interface Props {
+  /** 页面标题；不传时用站点标题 */
+  title?: string
+  description?: string
+  /** 是否输出索引限制；默认由站点模式决定（本阶段一律 noindex） */
+  noindex?: boolean
+}
+
+const {
+  title = seo.title,
+  description = seo.description,
+  noindex = true,
+} = Astro.props
+
+/** canonical 用绝对地址；Astro.url 已含 base 与尾斜杠规则 */
+const canonical = new URL(Astro.url.pathname, siteOrigin).href
+---
+
+<!doctype html>
+<html lang={seo.locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <SeoHead
+      {title}
+      {description}
+      {canonical}
+      locale={seo.locale}
+      {noindex}
+      siteName={identity.brand}
+    />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到主要内容</a>
+    <SiteHeader />
+    <main id="main">
+      <slot />
+    </main>
+    <SiteFooter />
+  </body>
+</html>
