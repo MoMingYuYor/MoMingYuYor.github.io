@@ -10,3 +10,7 @@ assets/fonts-source/
 
 # Python 隔离环境（字体子集化工具）
 tools/fonts/.venv/
+
+# 本地过程档案与内部设计文档，不随站点仓库公开
+.superpowers/
+docs/
