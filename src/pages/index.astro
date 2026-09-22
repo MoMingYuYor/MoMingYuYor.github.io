@@ -4,8 +4,10 @@
  *
  * 章节顺序固定为「身份与定位、精选软件作品、硬件实践、最近文章、简短关于与联系」（规格第 3 节）。
  * 本阶段只交付**真实入口与诚实空状态**：不预留虚构卡片、假封面、假日期或假项目。
- * 接入点：精选软件作品由第二阶段 S2-T6 接入真实条目；硬件实践与最近文章由第三阶段
- * S3-T9 接入。两处都只需替换数据来源，不调整已确认的视觉与结构。
+ * 接入点由 `data-home-projects`、`data-home-hardware`、`data-home-posts` 标记：
+ * 精选软件作品由第二阶段 S2-T6 接入真实条目，硬件实践与最近文章由第三阶段 S3-T9 接入。
+ * 两处都只需替换数据来源，不调整已确认的视觉与结构。
+ * 接入点刻意写成 data 属性而不是 HTML 注释——注释会随产物发布给访客，属内部过程信息外泄。
  */
 import BaseLayout from '../layouts/BaseLayout.astro'
 import Hero from '../components/home/Hero.astro'
@@ -27,13 +29,11 @@ const canonical = new URL(sitePath(base), siteOrigin).href
   <Hero />
 
   <div class="container container--home">
-    <!-- 接入点（第二阶段 S2-T6）：把下方空状态替换为精选作品条目，保留 section 与章节头 -->
     <section class="section section--first home-first" aria-labelledby="home-projects" data-home-projects>
       <SectionHeader number="01" title="精选软件作品" id="home-projects" />
       <p class="home-empty">暂无公开作品。</p>
     </section>
 
-    <!-- 接入点（第三阶段 S3-T9）：接入硬件实践条目；两个方向的真实入口保留 -->
     <section class="section" aria-labelledby="home-hardware" data-home-hardware>
       <SectionHeader number="02" title="硬件实践" id="home-hardware" />
       <p class="home-empty">暂无公开的装机与超频记录。</p>
@@ -42,7 +42,6 @@ const canonical = new URL(sitePath(base), siteOrigin).href
       </p>
     </section>
 
-    <!-- 接入点（第三阶段 S3-T9）：接入最近文章；当前不渲染任何卡片或订阅入口 -->
     <section class="section" aria-labelledby="home-posts" data-home-posts>
       <SectionHeader number="03" title="最近文章" id="home-posts" />
       <p class="home-empty">暂无公开文章。</p>

@@ -168,4 +168,24 @@ test.describe('内容与降级', () => {
     const text = await page.locator('main').innerText()
     expect(text).not.toMatch(/此处|用于展示|占位|待补充|示意|演示|编辑说明|Lorem|TODO/)
   })
+
+  test('衬线字体按需加载：两档字重请求成功，姓名使用衬线字体', async ({ page }) => {
+    const fontStatuses: number[] = []
+    page.on('response', (response) => {
+      if (/noto-serif-sc-\d00\..*\.woff2/.test(response.url())) fontStatuses.push(response.status())
+    })
+    await page.goto('/', { waitUntil: 'networkidle' })
+    await page.evaluate(() => document.fonts.ready)
+
+    // 首页同时用到 700（姓名、页头品牌）与 600（章节标题）
+    expect(fontStatuses.length).toBeGreaterThan(0)
+    expect(fontStatuses.every((status) => status === 200)).toBe(true)
+
+    const nameFontFamily = await page
+      .locator('#hero-name')
+      .evaluate((el) => getComputedStyle(el).fontFamily)
+    expect(nameFontFamily).toContain('Noto Serif SC')
+    expect(await page.evaluate(() => document.fonts.check('700 40px "Noto Serif SC"'))).toBe(true)
+    expect(await page.evaluate(() => document.fonts.check('600 28px "Noto Serif SC"'))).toBe(true)
+  })
 })
