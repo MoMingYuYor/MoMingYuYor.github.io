@@ -2,7 +2,7 @@
  * 发布级验证编排（S1-T11）。
  *
  * 串行执行，任一步失败立即以非零码退出：
- *   typecheck → test:unit → build → test:e2e → 子路径构建 → 子路径冒烟
+ *   typecheck → test:unit → build → test:e2e → 子路径构建 → 字体覆盖 → 子路径冒烟
  *
  * 两处刻意的设计：
  * 1. 子路径构建在 Node 里设置 `SITE_BASE`，不依赖调用方 shell。Git Bash 会把
@@ -44,11 +44,11 @@ interface Step {
 }
 
 const STEPS: readonly Step[] = [
-  { name: '1/6 类型检查', command: 'npm', args: ['run', 'typecheck'], timeoutMs: 300_000 },
-  { name: '2/6 单元测试', command: 'npm', args: ['run', 'test:unit'], timeoutMs: 120_000 },
-  { name: '3/6 生产构建', command: 'npm', args: ['run', 'build'], timeoutMs: 600_000 },
+  { name: '1/7 类型检查', command: 'npm', args: ['run', 'typecheck'], timeoutMs: 300_000 },
+  { name: '2/7 单元测试', command: 'npm', args: ['run', 'test:unit'], timeoutMs: 120_000 },
+  { name: '3/7 生产构建', command: 'npm', args: ['run', 'build'], timeoutMs: 600_000 },
   {
-    name: '4/6 浏览器测试',
+    name: '4/7 浏览器测试',
     command: 'npx',
     args: ['playwright', 'test'],
     // CI=1 关闭 reuseExistingServer，避免静默复用端口上残留的其它服务
@@ -56,13 +56,19 @@ const STEPS: readonly Step[] = [
     env: { CI: '1' },
   },
   {
-    name: '5/6 子路径构建',
+    name: '5/7 子路径构建',
     command: 'npx',
     args: ['astro', 'build', '--outDir', SUBPATH_OUT_DIR],
     timeoutMs: 600_000,
     env: { SITE_BASE: SUBPATH_BASE },
   },
-  { name: '6/6 子路径冒烟', command: 'node', args: ['-e', 'process.exit(0)'], timeoutMs: 30_000 },
+  {
+    name: '6/7 字体覆盖',
+    command: 'npx',
+    args: ['tsx', 'scripts/check-font-coverage.ts'],
+    timeoutMs: 60_000,
+  },
+  { name: '7/7 子路径冒烟', command: 'node', args: ['-e', 'process.exit(0)'], timeoutMs: 30_000 },
 ]
 
 /** 终止整棵进程树：Windows 用 taskkill /T，其余平台对进程组发信号 */

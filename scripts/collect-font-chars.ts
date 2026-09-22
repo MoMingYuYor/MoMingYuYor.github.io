@@ -17,7 +17,7 @@
  * 元素文本之外，还收集命中元素**自身**的 `title` 与 `aria-label` 属性值（工具提示与读屏
  * 文本会用到）；只取命中元素的属性，不把整页属性文本并进衬线子集。
  *
- * 输出：`.generated/font-chars-600.txt`、`.generated/font-chars-700.txt`（格式见文件头注释），
+ * 输出：`src/assets/fonts/chars-600.txt`、`chars-700.txt`（格式见文件头注释），
  * 供 `scripts/prepare-fonts.py` 消费。相同输入重复运行产出相同字节。
  *
  * 运行：`npm run fonts:collect`（或 `npx tsx scripts/collect-font-chars.ts`）。
@@ -30,7 +30,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 export const DIST_DIR = resolve(PROJECT_ROOT, 'dist')
-export const GENERATED_DIR = resolve(PROJECT_ROOT, '.generated')
+/** 字符清单与子集产物放在一起并入库：它是「子集覆盖了哪些字」的契约，CI 覆盖校验要读它 */
+export const CHAR_LIST_DIR = resolve(PROJECT_ROOT, 'src/assets/fonts')
 
 /**
  * 回退清单：刻意由系统字体呈现的符号，绝不进入衬线子集。
@@ -390,7 +391,7 @@ export function writeCharLists(): CharListResult[] {
   }
 
   const documents = htmlFiles.map((file) => readFileSync(file, 'utf8'))
-  mkdirSync(GENERATED_DIR, { recursive: true })
+  mkdirSync(CHAR_LIST_DIR, { recursive: true })
 
   return FONT_WEIGHT_GROUPS.map((group) => {
     const texts = documents.flatMap((html) =>
@@ -403,7 +404,7 @@ export function writeCharLists(): CharListResult[] {
       )
       process.exit(1)
     }
-    const filePath = join(GENERATED_DIR, `font-chars-${group.weight}.txt`)
+    const filePath = join(CHAR_LIST_DIR, `chars-${group.weight}.txt`)
     writeFileSync(filePath, buildCharListFileContent(group, chars, htmlFiles.length), 'utf8')
     return { weight: group.weight, charCount: chars.length, filePath, htmlFileCount: htmlFiles.length }
   })

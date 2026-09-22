@@ -215,5 +215,8 @@ test('版权年份写入构建产物，不由客户端时钟计算', async () =>
 
   expect(footerHtml, '构建产物应含页脚').not.toBe('')
   expect(footerHtml, '版权年份应在构建期写入 HTML').toContain(String(currentYear()))
-  expect(html, '产物中不得用客户端脚本计算版权年份').not.toMatch(/getFullYear/)
+  // 断言范围限定在页脚：整页含客户端日期脚本是预期的（首页身份区的日期与问候要按访客本地时间重算），
+  // 这里要守的是"页脚年份不依赖客户端时钟"
+  expect(footerHtml, '页脚不得含脚本').not.toMatch(/<script/)
+  expect(footerHtml, '页脚不得用客户端时钟计算年份').not.toMatch(/getFullYear/)
 })

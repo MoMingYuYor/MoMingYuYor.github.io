@@ -1,0 +1,31 @@
+# Noto Serif SC 700 字重子集字符清单（S1-T4 生成，勿手改）
+# 生成：npm run fonts:collect（scripts/collect-font-chars.ts）；消费：npm run fonts:subset
+# 字符来源：dist/**/*.html（6 个文件）中命中选择器的元素文本与 title、aria-label 属性值
+# 选择器：h1、.display-name、.site-header__brand
+# 口径：h1 姓名与主要标题（首页 h1.display-name）、页头品牌 .site-header__brand（衬线 700）
+# 回退清单（刻意不进衬线子集，由系统字体呈现）：◐ ☀ ☾ ☰ ✕ → ← ↑ ↓
+# 回退区间：箭头 U+2190–U+21FF、杂项符号 U+2600–U+27BF、补充符号 U+2B00–U+2BFF、emoji U+1F000–U+1FAFF、不可见格式字符
+# 剔除：空白、控制字符与不可见格式字符（不承载字形）
+# 格式："# " 开头为注释行；其余每行一个字符（NFC 归一、去重、码位升序）
+# 字符数：21
+M
+Y
+g
+i
+n
+o
+u
+于
+件
+作
+关
+到
+品
+找
+文
+未
+硬
+章
+该
+面
+页

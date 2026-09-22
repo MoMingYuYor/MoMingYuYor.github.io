@@ -29,7 +29,13 @@
   --color-accent: #166D68; /* 链接与操作 */
   --color-accent-contrast: #FFFFFF; /* 操作色之上的文字 */
   --color-accent-gold: #806138; /* 少量章节装饰：编号、细线、图片呼应 */
-  --color-border: #D8DEDF; /* 分隔线 */
+  --color-border: #D8DEDF; /* 细分隔线：装饰性，不承担控件边界语义 */
+  /*
+   * 控件边界（分段选项外框、菜单面板等）。与 --color-border 分开是因为后者对底色
+   * 只有约 1.3:1，用作控件轮廓时无法辨识（WCAG 1.4.11 要求非文本对比度 ≥ 3:1）。
+   * 本值对页面底色的对比度约 3.5:1。
+   */
+  --color-control-border: #7C878B;
   --color-focus-ring: var(--color-accent);
   /*
    * 图片上文字的局部遮罩。两个主题都取深色：遮罩下压的是照片，而照片的明暗与主题无关，
@@ -136,6 +142,7 @@
     --color-accent-contrast: #14201F;
     --color-accent-gold: #D2AD72;
     --color-border: #424A4E;
+    --color-control-border: #6B7478;
     --color-focus-ring: var(--color-accent);
     --color-overlay-scrim: rgba(12, 14, 16, 0.58);
     color-scheme: dark;
@@ -154,6 +161,7 @@
   --color-accent-contrast: #14201F;
   --color-accent-gold: #D2AD72;
   --color-border: #424A4E;
+  --color-control-border: #6B7478;
   --color-focus-ring: var(--color-accent);
   --color-overlay-scrim: rgba(12, 14, 16, 0.58);
   color-scheme: dark;

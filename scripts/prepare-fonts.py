@@ -3,7 +3,7 @@
 
 职责：
   1. 读取 `scripts/collect-font-chars.ts` 生成的字重清单
-     `.generated/font-chars-600.txt` / `.generated/font-chars-700.txt`；
+     `src/assets/fonts/chars-600.txt` / `chars-700.txt`；
   2. 对字体源做显式 cmap 缺字校验：清单里有、字体源里没有的码位一律报错退出
      （`--no-ignore-missing-unicodes` 同义，见 `build_options`），不静默忽略；
   3. 用 `fontTools.subset` 生成 woff2，先写 `.generated/fonts/` 暂存，校验许可元信息与
@@ -61,7 +61,7 @@ def ensure_venv() -> None:
 
 
 def char_list_path(weight: int) -> Path:
-    return GENERATED_DIR / f"font-chars-{weight}.txt"
+    return DEST_DIR / f"chars-{weight}.txt"
 
 
 def load_char_payload(path: Path) -> str:

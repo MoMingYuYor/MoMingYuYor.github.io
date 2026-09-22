@@ -83,6 +83,21 @@ test.describe('主题与主视觉', () => {
     await expect(page.locator('[data-hero-image]')).toHaveAttribute('src', /hero-light\.webp/)
   })
 
+  test('显式偏好与系统不一致时也只下载一张壁纸', async ({ page }) => {
+    const requested: string[] = []
+    page.on('request', (request) => {
+      if (/hero-(light|dark)\.webp/.test(request.url())) requested.push(request.url())
+    })
+    await page.addInitScript(() => window.localStorage.setItem('personal-home:theme', 'dark'))
+    await page.emulateMedia({ colorScheme: 'light' })
+    await page.goto('/', { waitUntil: 'networkidle' })
+
+    await expect(page.locator('[data-hero-image]')).toHaveAttribute('src', /hero-dark\.webp/)
+    // 系统主题那张是多余的：src 不在 HTML 里写死，因此浏览器不会先下载它
+    expect(requested.some((url) => url.includes('hero-light.webp'))).toBe(false)
+    expect(requested.filter((url) => url.includes('hero-dark.webp'))).toHaveLength(1)
+  })
+
   test('切换主题后主视觉跟随，且保留已成功显示的图直到目标图可用', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 })
     await page.emulateMedia({ colorScheme: 'light' })

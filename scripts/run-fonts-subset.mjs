@@ -46,7 +46,7 @@ if (!existsSync(prepareScript)) {
 }
 
 for (const weight of weights) {
-  const charList = resolve(projectRoot, `.generated/font-chars-${weight}.txt`)
+  const charList = resolve(projectRoot, `src/assets/fonts/chars-${weight}.txt`)
   if (!existsSync(charList)) {
     abort(
       `字符清单缺失：${relative(projectRoot, charList)}\n` +

@@ -13,7 +13,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 import Hero from '../components/home/Hero.astro'
 import SectionHeader from '../components/SectionHeader.astro'
 import ContactEntry from '../components/ContactEntry.astro'
-import { contacts, identity, siteOrigin } from '../lib/site'
+import { contacts, identity } from '../lib/site'
 import { sitePath } from '../lib/paths'
 
 const base = import.meta.env.BASE_URL
@@ -22,7 +22,6 @@ const blogHref = sitePath(base, 'blog')
 const aboutHref = sitePath(base, 'about')
 
 const pageDescription = `${identity.brand} 的个人主页：${identity.direction}。作品、电脑 DIY 与超频实践，以及技术文章。`
-const canonical = new URL(sitePath(base), siteOrigin).href
 ---
 
 <BaseLayout description={pageDescription}>

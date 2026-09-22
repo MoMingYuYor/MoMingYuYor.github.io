@@ -38,18 +38,11 @@ const mailContact = contacts.find((contact) => contact.icon === 'mail')
 <section class="hero" aria-labelledby="hero-name">
   <div class="hero__media">
     <picture class="hero__picture" data-hero-picture>
-      <source
-        media="(prefers-color-scheme: dark)"
-        data-hero-source
-        data-system-media="(prefers-color-scheme: dark)"
-        srcset={dark.src}
-      />
       <img
         class="hero__image"
         data-hero-image
         data-light-src={light.src}
         data-dark-src={dark.src}
-        src={light.src}
         alt={light.alt}
         width={light.width}
         height={light.height}
@@ -58,7 +51,37 @@ const mailContact = contacts.find((contact) => contact.icon === 'mail')
         {...(light.fetchpriority ? { fetchpriority: light.fetchpriority } : {})}
       />
     </picture>
+    <noscript>
+      <picture class="hero__picture">
+        <source media="(prefers-color-scheme: dark)" srcset={dark.src} />
+        <img
+          class="hero__image"
+          src={light.src}
+          alt={light.alt}
+          width={light.width}
+          height={light.height}
+        />
+      </picture>
+    </noscript>
   </div>
+
+  <script is:inline>
+    /*
+     * 首屏选图：src 不写死在 HTML 里。若写死，浏览器会先下载系统主题那一张，
+     * 而访客显式选过主题且与系统不一致时，这张是多余的——实测会被完整下载（约 56KB）。
+     * data-theme 已由 <head> 的引导脚本在首次绘制前确定，这里只做一次选择。
+     * 无脚本时由上面的 <noscript> 按系统外观选图。
+     * 注意：本脚本是内联脚本，第四阶段 S4-T10 生成 CSP hash 时必须一并覆盖，
+     * 否则首屏主视觉会缺图（页面其余部分与文字仍可读，模块脚本会兜底补上）。
+     */
+    ;(function () {
+      var image = document.querySelector('[data-hero-image]')
+      if (!image) return
+      var isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+      var src = image.getAttribute(isDark ? 'data-dark-src' : 'data-light-src')
+      if (src) image.setAttribute('src', src)
+    })()
+  </script>
 
   <div class="hero__content container">
     <p class="hero__meta">
@@ -90,7 +113,7 @@ const mailContact = contacts.find((contact) => contact.icon === 'mail')
 </section>
 
 <script>
-  import { readStoredPreference, resolveTheme, type Theme } from '../../lib/theme'
+  import type { Theme } from '../../lib/theme'
   import { formatMonthDay, formatWeekday, formatYear, greetingFor, isoDate } from '../../lib/datetime'
 
   /** 日期与问候在加载时求值一次；不用定时器，访客停留期间跨零点不更新是可接受的 */
@@ -107,19 +130,7 @@ const mailContact = contacts.find((contact) => contact.icon === 'mail')
   const timeEl = document.querySelector<HTMLTimeElement>('[data-hero-date]')
   if (timeEl) timeEl.dateTime = isoDate(now)
 
-  const picture = document.querySelector<HTMLPictureElement>('[data-hero-picture]')
-  const image = picture?.querySelector<HTMLImageElement>('[data-hero-image]') ?? null
-  const sources = picture ? Array.from(picture.querySelectorAll<HTMLSourceElement>('[data-hero-source]')) : []
-
-  function systemIsDark(): boolean {
-    try {
-      return typeof window.matchMedia === 'function'
-        ? window.matchMedia('(prefers-color-scheme: dark)').matches
-        : false
-    } catch {
-      return false
-    }
-  }
+  const image = document.querySelector<HTMLImageElement>('[data-hero-image]')
 
   /** 请求序号：只提交最后一次请求的结果，避免快速连续切换时旧结果覆盖新结果 */
   let requestId = 0
@@ -142,28 +153,18 @@ const mailContact = contacts.find((contact) => contact.icon === 'mail')
     image.setAttribute('src', target)
   }
 
-  function syncHeroImage(): void {
-    const preference = readStoredPreference((key) => window.localStorage.getItem(key))
-    if (preference === 'system') {
-      // 交还给 <source> 的媒体查询，让浏览器原生跟随系统外观变化
-      for (const source of sources) {
-        const original = source.dataset.systemMedia
-        if (original) source.setAttribute('media', original)
-      }
-      return
-    }
-    // 显式偏好：屏蔽 <source>，改由脚本按 data-theme 选图
-    for (const source of sources) source.setAttribute('media', 'not all')
-    void commitThemeImage(resolveTheme(preference, systemIsDark()))
+  function currentTheme(): Theme {
+    return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
   }
 
-  syncHeroImage()
+  // 兜底：内联脚本被 CSP 拦下时由这里补上首屏选图（此时可能多下载一张，但不会缺图）
+  void commitThemeImage(currentTheme())
 
-  // 主题控件改变 data-theme 后同步换图（等解码完成再提交）
-  new MutationObserver(syncHeroImage).observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['data-theme'],
-  })
+  // 主题控件改变 data-theme 后换图：等目标图解码完成再提交
+  new MutationObserver(() => void commitThemeImage(currentTheme())).observe(
+    document.documentElement,
+    { attributes: true, attributeFilter: ['data-theme'] },
+  )
 </script>
 
 <style>

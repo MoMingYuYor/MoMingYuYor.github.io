@@ -1,28 +1,31 @@
 # 部署到 GitHub Pages（用户主站仓库 MoMingYuYor.github.io，base=/）
-# 用 build:ci 而非 build：字体子集产物（src/assets/fonts/*.woff2）已入库，
-# CI 上无需 fontTools 环境与字体源；字体内容变更时在本地跑 npm run fonts:build 后提交。
+#
+# 结构：只读的 verify 任务先跑完整验证，通过后由独立的 deploy 任务发布构建产物。
+# 部署任务不重新构建，只消费验证任务上传的产物，因此它拿到的就是被验证过的那一份。
+# 字体子集（src/assets/fonts/*.woff2）与字符清单已入库，CI 不需要 fontTools 环境与字体源；
+# 字体内容变更时在本地跑 npm run fonts:build 后提交。
+#
+# 已知待办（见 docs/superpowers/plans/2026-09-22-content-and-release.md 的 S4-T5）：
+# 关键 Action 仍固定在标签而非 commit SHA；Node 版本需与 .nvmrc 收敛。
+# 本文件尚未在 GitHub Actions 上实际运行过。
 name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  verify:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,10 +33,35 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build:ci
+      # 完整验证链：类型 → 单测 → 构建 → e2e → 子路径构建 → 子路径冒烟 → 字体覆盖
+      - run: npm run verify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-dist
+          path: dist
+          retention-days: 7
+
+  deploy:
+    needs: verify
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: site-dist
+          path: dist
       - uses: actions/configure-pages@v5
         with:
           enablement: true
+      # 只上传构建产物目录，不发布仓库根目录或源码
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
