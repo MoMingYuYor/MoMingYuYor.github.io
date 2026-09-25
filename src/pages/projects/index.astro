@@ -1,69 +1,75 @@
 ---
 /**
- * 作品索引骨架（计划 S1-T9；规格第 2、3、11.2 节）。
+ * 作品索引（S2-T5；规格第 2、3、11.2 节）。
  *
- * 本页当前是最小可用骨架：真实标题、诚实空状态、返回入口。
- * 零公开条目时不渲染空列表容器、不造假封面、不造假日期、不造假项目，
- * 也不出现空侧栏或失效入口（规格第 2 节；A05）。
- *
- * 接入点（第二阶段 S2-T5）：真实条目由公开查询结果提供后，就地替换本节标记为
- * `data-projects-index` 的分区内容——把空状态段落换成索引布局即可，
- * 页首标题、摘要、容器、章节头与返回入口保持不变。
- *
- * 内容边界：本页文案只陈述栏目职责，不写设计说明、组件说明或编辑提示（规格第 11.4 节）。
+ * 形态由内容决定：0 条真实空状态、1 条用完整可用区域、多条才出现索引布局。
+ * 数据只来自 `getPublicProjects()`——草稿与未到发布日期的条目既不出现在列表里，
+ * 也不会生成详情页。
  */
 import BaseLayout from '../../layouts/BaseLayout.astro'
-import SectionHeader from '../../components/SectionHeader.astro'
-import { sitePath } from '../../lib/paths'
+import ProjectEntrySummary from '../../components/project/ProjectEntrySummary.astro'
+import { getPublicProjects } from '../../content/queries'
 import { identity } from '../../lib/site'
+import { selectPresentation } from '../../lib/presentation'
 
-/** 首页地址经统一路径函数生成，不硬编码 base（子路径部署时同样正确） */
-const homeHref = sitePath(import.meta.env.BASE_URL)
+const projects = await getPublicProjects()
+const mode = selectPresentation(projects.length)
 
 const pageTitle = `作品 · ${identity.brand}`
-const pageDescription = `${identity.brand} 的软件项目索引：${identity.direction}。`
+const pageDescription = `${identity.brand} 的软件项目：问题与约束、本人贡献、关键决策与结果证据。`
 ---
 
 <BaseLayout title={pageTitle} description={pageDescription}>
   <div class="container">
     <header class="index-intro">
       <h1 class="index-intro__title">作品</h1>
-      <p class="index-intro__lead">{identity.direction}</p>
+      <p class="index-intro__lead">{pageDescription}</p>
     </header>
 
-    <!-- 接入点（第二阶段 S2-T5）：以真实项目条目替换本节空状态 -->
-    <section class="section" aria-labelledby="projects-index" data-projects-index>
-      <SectionHeader number="01" title="软件项目" id="projects-index" />
-      <p class="index-empty">暂无公开作品。</p>
+    <section
+      class:list={['section', 'section--first', mode === 'single' ? 'projects-single' : null]}
+      aria-label="项目列表"
+      data-projects-index
+      data-presentation={mode}
+    >
+      {mode === 'empty' ? <p class="index-empty">暂无公开作品。</p> : null}
+      {
+        mode !== 'empty' ? (
+          <div class="projects-list">
+            {projects.map((project) => (
+              <ProjectEntrySummary project={project} />
+            ))}
+          </div>
+        ) : null
+      }
     </section>
-
-    <p class="index-back">
-      <a class="touch-target" href={homeHref}>返回首页</a>
-    </p>
   </div>
 </BaseLayout>
 
 <style>
-  /* 页首区块：不画分隔线，H1 靠近页头，与关于页保持同一节奏 */
   .index-intro {
-    padding-block: var(--space-2xl) var(--space-3xl);
+    padding-block: var(--space-2xl) var(--space-lg);
   }
 
   .index-intro__lead {
-    max-width: 36em; /* 中文约 36 字/行 */
-    margin-block-start: var(--space-md);
+    max-width: 36em;
+    margin-block-start: var(--space-sm);
     color: var(--color-text-secondary);
     font-size: var(--font-size-body-lg);
   }
 
-  /* 诚实空状态：只用次要文字色，不做成提示框、不写编辑说明 */
   .index-empty {
     max-width: 36em;
     color: var(--color-text-secondary);
   }
 
-  /* 返回入口：独立于页头导航的显式回路；触摸目标由全局 .touch-target 保证 44px */
-  .index-back {
-    padding-block-end: var(--space-3xl);
+  .projects-list {
+    display: grid;
+    gap: var(--space-2xl);
+  }
+
+  /* 单条时用完整可用区域，不做两栏留白（规格 11.2） */
+  .projects-single .projects-list {
+    max-inline-size: 46em;
   }
 </style>

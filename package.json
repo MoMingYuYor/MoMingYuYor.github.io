@@ -9,6 +9,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "typecheck": "astro check",
+    "check:content": "tsx scripts/check-content.ts",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
     "fonts:collect": "tsx scripts/collect-font-chars.ts",
@@ -18,7 +19,8 @@
     "verify": "tsx scripts/verify.ts"
   },
   "dependencies": {
-    "astro": "^7.3.3"
+    "astro": "^7.3.3",
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",

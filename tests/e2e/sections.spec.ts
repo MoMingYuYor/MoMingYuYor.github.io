@@ -1,28 +1,32 @@
 import { expect, test, type Page } from '@playwright/test'
 
 /**
- * 三个栏目索引骨架与章节头的浏览器回归（规格第 2、3、11.2、11.3、13 节；计划 S1-T9）。
+ * 栏目索引页的浏览器回归（规格第 2、3、11.2、11.3、13 节）。
  *
  * 覆盖：`/projects/`、`/hardware/`、`/blog/` 三页可达且各自标题、摘要、canonical 独立；
- * 章节头组件（`SectionHeader`）的 DOM 契约与 section 的可访问名称；
+ * 仍使用骨架的页面（`/hardware/`、`/blog/`）的章节头 DOM 契约与 section 可访问名称；
  * 每页的诚实空状态、不出现编辑文案、不出现假列表/假封面/假日期/假条目；
- * `/hardware/` 当前不输出指向尚不存在的 `/hardware/builds/`、`/hardware/overclocking/` 的链接；
- * 页内链接无死链；320/390/1440 无整页横向溢出；双主题下文字可读；无脚本时内容完整可读；
+ * `/hardware/` 当前不输出指向尚不存在的两个分区路径的链接；
+ * 页内链接与页头导航无死链；320/390/1440 无整页横向溢出；双主题下文字可读；无脚本时内容完整可读；
  * 三页在预览模式下输出 `noindex, nofollow`。
  *
+ * 注意：`/projects/` 已由第二阶段 S2-T5 换成真实索引页（不使用 SectionHeader），
+ * 因此章节头断言只对仍是骨架的页面生效；`/projects/` 的形态判定与草稿不泄漏
+ * 由 `tests/e2e/projects.spec.ts` 与 `scripts/verify-fixtures.ts` 覆盖。
+ *
  * 未覆盖（如实标注）：视觉基线（第四阶段 S4-T4）、跨浏览器（第四阶段 S4-T6）、
- * 真机触控、读屏实际播报、200% 文字缩放。`SectionHeader` 的 `id` 省略分支
- * （不传 id 时不输出 id 属性）在当前三页中没有调用点，无法在浏览器中断言，见交付说明。
+ * 真机触控、读屏实际播报、200% 文字缩放。
  */
 
-/** 三个栏目索引骨架页；标题、章节头与空状态文案在此显式声明 */
+/** 栏目索引页；标题、章节头与空状态文案在此显式声明 */
 const SECTIONS = [
   {
     path: '/projects/',
     label: '作品',
-    descriptionHint: /软件项目索引/,
+    descriptionHint: /软件项目/,
     canonical: /\/projects\/$/,
-    headings: ['软件项目'],
+    // 空状态形态下没有二级标题：单条/多条形态的标题结构由夹具验证覆盖
+    headings: [] as const,
     emptyStates: ['暂无公开作品。'],
   },
   {
@@ -172,7 +176,7 @@ test('三个索引页可达，标题、摘要与 canonical 各自独立', async 
     // canonical 由 BaseLayout 生成，指向本页绝对地址
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', section.canonical)
 
-    // 文档大纲：一个 h1（栏目名）+ 每节一个 h2
+    // 文档大纲：恰好一个 h1（栏目名）；h2 数量按该页当前形态
     await expect(page.locator('main h1')).toHaveCount(1)
     await expect(page.locator('main h1')).toHaveText(section.label)
     await expect(page.locator('main h2')).toHaveCount(section.headings.length)
@@ -185,7 +189,11 @@ test('三个索引页可达，标题、摘要与 canonical 各自独立', async 
 })
 
 test('章节头组件输出约定的 DOM 结构，section 的可访问名称来自它', async ({ page }) => {
-  for (const section of SECTIONS) {
+  // 只检查仍由骨架承担章节头的页面；`/projects/` 已换成真实索引页，改用 h1 + 列表结构
+  const skeletonSections = SECTIONS.filter((section) => section.headings.length > 0)
+  expect(skeletonSections.length, '应至少有一个页面仍使用 SectionHeader').toBeGreaterThan(0)
+
+  for (const section of skeletonSections) {
     await page.goto(section.path)
     const headers = page.locator('main .section-header')
     await expect(headers).toHaveCount(section.headings.length)
@@ -238,10 +246,11 @@ test('每页是诚实空状态：无假列表、假封面、假日期、假条�
     const text = await main.innerText()
     expect(text, `${section.path} 出现了编辑文案`).not.toMatch(EDITORIAL_COPY)
 
-    // 返回入口存在且指向首页
-    const back = main.getByRole('link', { name: '返回首页' })
-    await expect(back).toBeVisible()
-    await expect(back).toHaveAttribute('href', '/')
+    // 返回首页的入口由页头导航提供：栏目页是顶层导航目的地，
+    // 不再额外在正文里放"返回首页"链接（避免与导航重复）
+    const homeLink = page.getByRole('banner').getByRole('link', { name: '首页' })
+    await expect(homeLink).toBeVisible()
+    await expect(homeLink).toHaveAttribute('href', '/')
   }
 })
 
@@ -265,20 +274,28 @@ test('/hardware/ 用文字呈现 DIY 与超频两个方向，且不链接到尚�
   expect(await page.locator('a[href="/hardware/"]').count()).toBeGreaterThan(0)
 })
 
-test('三个索引页的页内链接都指向可访问的地址', async ({ page }) => {
+test('栏目页没有死链：正文链接（如有）与页头导航都指向可达地址', async ({ page }) => {
   for (const section of SECTIONS) {
     await page.goto(section.path)
+
+    // 空状态页面正文里可能一个链接都没有，这是允许的；有链接就必须是站内且可达
     const hrefs = await page.locator('main a[href]').evaluateAll((links) =>
       links.map((link) => link.getAttribute('href') ?? ''),
     )
-    expect(hrefs.length, `${section.path} 没有可检查的链接`).toBeGreaterThan(0)
-
     for (const href of hrefs) {
       expect(href.startsWith('/'), `${section.path} 出现非站内链接：${href}`).toBe(true)
-      // 用当前页面地址解析成绝对地址，不依赖请求上下文的 baseURL 继承
       const response = await page.request.get(new URL(href, page.url()).href)
       expect(response.status(), `${section.path} 的链接 ${href} 不可达`).toBe(200)
     }
+
+    // 页头导航必须有一个可用的回首页入口：这是栏目页唯一的返回路径
+    const homeHref = await page
+      .getByRole('banner')
+      .getByRole('link', { name: '首页' })
+      .getAttribute('href')
+    expect(homeHref, `${section.path} 的页头缺少回首页链接`).toBeTruthy()
+    const homeResponse = await page.request.get(new URL(homeHref!, page.url()).href)
+    expect(homeResponse.status(), `${section.path} 的回首页链接不可达`).toBe(200)
   }
 })
 
@@ -337,7 +354,8 @@ test.describe('无脚本', () => {
       for (const emptyState of section.emptyStates) {
         await expect(page.locator('main').getByText(emptyState, { exact: true })).toBeVisible()
       }
-      await expect(page.locator('main').getByRole('link', { name: '返回首页' })).toBeVisible()
+      // 无脚本时回首页入口同样可用：它由页头导航提供，不依赖客户端脚本
+      await expect(page.getByRole('banner').getByRole('link', { name: '首页' })).toBeVisible()
     }
   })
 })

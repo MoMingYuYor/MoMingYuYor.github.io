@@ -1,0 +1,91 @@
+---
+/**
+ * 项目事实（S2-T5）：角色、时间范围、维护状态、技术标签、证据与访问入口。
+ * 缺失字段整行省略；链接经 classifyHref 判定后再决定是否加新窗口属性，
+ * 非法链接在校验阶段已被阻断，这里不做静默降级。
+ */
+import { PROJECT_STATUS_LABELS, TECH_TAG_LABELS, type TechTag } from '../../content/taxonomy'
+import type { ProjectEntry } from '../../content/queries'
+import { externalLinkAttributes } from '../../lib/links'
+
+interface Props {
+  project: ProjectEntry
+}
+
+const { project } = Astro.props
+const tags = project.data.techTags as readonly TechTag[]
+const status = project.data.projectStatus
+const facts = [
+  project.data.role ? { label: '角色', value: project.data.role } : null,
+  project.data.period ? { label: '时间', value: project.data.period } : null,
+  status ? { label: '状态', value: PROJECT_STATUS_LABELS[status] } : null,
+  tags.length > 0 ? { label: '技术', value: tags.map((tag) => TECH_TAG_LABELS[tag]).join('、') } : null,
+].filter((fact): fact is { label: string; value: string } => fact !== null)
+
+const links = [...project.data.links, ...project.data.evidence.filter((item) => item.href)]
+---
+
+{
+  facts.length > 0 ? (
+    <dl class="project-facts">
+      {facts.map((fact) => (
+        <div class="project-facts__row">
+          <dt class="project-facts__label">{fact.label}</dt>
+          <dd class="project-facts__value">{fact.value}</dd>
+        </div>
+      ))}
+    </dl>
+  ) : null
+}
+
+{
+  links.length > 0 ? (
+    <ul class="project-links list-plain">
+      {links.map((link) => {
+        const attrs = externalLinkAttributes(link.href ?? '')
+        return (
+          <li class="project-links__item">
+            <a class="project-links__link touch-target" href={link.href} {...attrs}>
+              {link.label}
+            </a>
+          </li>
+        )
+      })}
+    </ul>
+  ) : null
+}
+
+<style>
+  .project-facts {
+    display: grid;
+    gap: var(--space-xs);
+    margin: 0;
+  }
+
+  .project-facts__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .project-facts__label {
+    min-inline-size: 4em;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-label);
+  }
+
+  .project-facts__value {
+    margin: 0;
+  }
+
+  .project-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-block-start: var(--space-md);
+  }
+
+  .project-links__link {
+    font-weight: var(--font-weight-medium);
+  }
+</style>

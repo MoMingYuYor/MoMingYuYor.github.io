@@ -1,0 +1,88 @@
+---
+/**
+ * 作品索引条目（S2-T5）。只渲染真实存在的字段：缺失项整行省略，
+ * 不出现「待补充」占位，也不为空字段造标签。
+ */
+import { PROJECT_STATUS_LABELS, TECH_TAG_LABELS, type TechTag } from '../../content/taxonomy'
+import type { ProjectEntry } from '../../content/queries'
+import { sitePath } from '../../lib/paths'
+
+interface Props {
+  project: ProjectEntry
+}
+
+const { project } = Astro.props
+const base = import.meta.env.BASE_URL
+const href = sitePath(base, 'projects', project.data.slug)
+const status = project.data.projectStatus
+const tags = project.data.techTags as readonly TechTag[]
+---
+
+<article class="project-summary">
+  <h2 class="project-summary__title">
+    <a class="project-summary__link" href={href}>{project.data.title}</a>
+  </h2>
+  <p class="project-summary__text">{project.data.summary}</p>
+  {
+    project.data.resultSummary ? (
+      <p class="project-summary__result">{project.data.resultSummary}</p>
+    ) : null
+  }
+  {
+    tags.length > 0 ? (
+      <ul class="project-summary__tags list-plain">
+        {tags.map((tag) => (
+          <li class="project-summary__tag">{TECH_TAG_LABELS[tag]}</li>
+        ))}
+      </ul>
+    ) : null
+  }
+  {status ? <p class="project-summary__status">{PROJECT_STATUS_LABELS[status]}</p> : null}
+  <p class="project-summary__entry">
+    <a href={href}>查看项目详情</a>
+  </p>
+</article>
+
+<style>
+  .project-summary__title {
+    margin: 0;
+  }
+
+  .project-summary__text {
+    max-width: 42em;
+    margin-block-start: var(--space-sm);
+  }
+
+  .project-summary__result {
+    max-width: 42em;
+    margin-block-start: var(--space-xs);
+    color: var(--color-text-secondary);
+  }
+
+  .project-summary__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-block-start: var(--space-md);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-label);
+  }
+
+  .project-summary__tag {
+    padding-inline: var(--space-sm);
+    padding-block: var(--space-2xs);
+    border: var(--border-width) solid var(--color-control-border);
+    border-radius: var(--radius-pill);
+  }
+
+  .project-summary__status {
+    margin-block-start: var(--space-sm);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-label);
+  }
+
+  .project-summary__entry {
+    margin-block-start: var(--space-md);
+    font-weight: var(--font-weight-medium);
+  }
+</style>

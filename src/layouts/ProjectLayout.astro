@@ -1,0 +1,91 @@
+---
+/**
+ * 项目详情页骨架（S2-T5）。
+ *
+ * 只处理页面骨架与语义：`<main>` 内的标题层级、返回作品索引入口、一次明确的联系入口。
+ * 数据由页面通过公开查询取得后传入；模板不自行调用 `getCollection`。
+ */
+import BaseLayout from './BaseLayout.astro'
+import ContactEntry from '../components/ContactEntry.astro'
+import { contacts, identity } from '../lib/site'
+import { sitePath } from '../lib/paths'
+
+interface Props {
+  /** 页面标题；canonical 由 BaseLayout 依据 Astro.url 生成，模板不需要 slug */
+  title: string
+  description: string
+  updatedAt?: Date
+}
+
+const { title, description, updatedAt } = Astro.props
+const base = import.meta.env.BASE_URL
+const listHref = sitePath(base, 'projects')
+const mailContact = contacts.find((contact) => contact.icon === 'mail')
+---
+
+<BaseLayout title={`${title} · ${identity.brand}`} description={description}>
+  <div class="container">
+    <nav class="project-nav" aria-label="面包屑">
+      <a class="project-nav__link" href={listHref}>作品</a>
+    </nav>
+
+    <header class="project-header">
+      <h1 class="project-header__title">{title}</h1>
+      {updatedAt ? <p class="project-header__updated">更新于 <time datetime={updatedAt.toISOString().slice(0, 10)}>{updatedAt.toISOString().slice(0, 10)}</time></p> : null}
+      <slot name="facts" />
+    </header>
+
+    <div class="project-body">
+      <slot />
+    </div>
+
+    {
+      mailContact ? (
+        <section class="section project-contact" aria-labelledby="project-contact-title">
+          <h2 class="project-contact__title" id="project-contact-title">联系</h2>
+          <p class="project-contact__note">想了解这个项目的更多细节，可以通过邮件联系。</p>
+          <ul class="list-plain project-contact__list">
+            <li>
+              <ContactEntry label={mailContact.label} href={mailContact.href} icon={mailContact.icon} />
+            </li>
+          </ul>
+        </section>
+      ) : null
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .project-nav {
+    padding-block-start: var(--space-xl);
+    font-size: var(--font-size-label);
+  }
+
+  .project-header {
+    padding-block: var(--space-xl) var(--space-2xl);
+  }
+
+  .project-header__title {
+    margin: 0;
+  }
+
+  .project-header__updated {
+    margin-block-start: var(--space-xs);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-label);
+  }
+
+  .project-body {
+    padding-block-end: var(--space-2xl);
+    max-inline-size: 42em;
+  }
+
+  .project-contact__note {
+    max-width: 36em;
+    color: var(--color-text-secondary);
+  }
+
+  .project-contact__list {
+    margin-block-start: var(--space-md);
+  }
+</style>
